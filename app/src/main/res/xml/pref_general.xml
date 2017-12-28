@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    >
+
+    <SwitchPreference
+        android:key="smartalarm_use"
+        android:title="@string/smartalarm_settings_title"
+        android:summaryOn="@string/smartalarm_summary_on"
+        android:summaryOff="@string/smartalarm_summary_off"
+        app:wear_iconOn="@drawable/ic_check"
+        app:wear_iconOff="@drawable/ic_cross"
+        android:defaultValue="true" />
+
+    <NumberPreference
+        android:key="smartalarm_hr"
+        android:title="@string/smartalarm_settings_hour"
+        android:min="0"
+        android:max="23"
+        android:defaultValue="7"
+        />
+
+    <NumberPreference
+        android:key="smartalarm_min"
+        android:title="@string/smartalarm_settings_min"
+        android:min="0"
+        android:max="59"
+        android:defaultValue="0"
+        />
+
+    <TextPreference
+        android:key="email"
+        android:title="Export Email"
+        android:defaultValue=""
+        />
+
+    <ListPreference
+        android:key="acc_polling_rate"
+        android:title="@string/acc_polling_rate_title"
+        android:entries="@array/polling_rates"
+        android:entryValues="@array/polling_rates_values"
+        android:defaultValue="3" />
+
+    <NumberPreference
+        android:key="datapoint_rate"
+        android:title="@string/datapoint_rate_title"
+        android:min="1"
+        android:max="60"
+        android:defaultValue="1" />
+
+    <ListPreference
+        android:key="acc_polling_rate"
+        android:title="@string/acc_polling_rate_title"
+        android:entries="@array/polling_rates"
+        android:entryValues="@array/polling_rates_values"
+        android:defaultValue="3" />
+
+    <SwitchPreference
+        android:key="hrm_use"
+        android:title="@string/hrm_settings_title"
+        android:summaryOn="@string/hrm_summary_on"
+        android:summaryOff="@string/hrm_summary_off"
+        app:wear_iconOn="@drawable/ic_check"
+        app:wear_iconOff="@drawable/ic_cross"
+        android:defaultValue="true"
+        />
+
+    <ListPreference
+        android:key="hrm_polling_rate"
+        android:title="@string/hrm_polling_rate_title"
+        android:entries="@array/polling_rates"
+        android:entryValues="@array/polling_rates_values"
+        android:defaultValue="3"
+        android:dependency="hrm_use"/>
+
+
+</PreferenceScreen>
