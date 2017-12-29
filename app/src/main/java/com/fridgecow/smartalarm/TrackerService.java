@@ -170,7 +170,7 @@ public class TrackerService extends Service implements SensorEventListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(intent.getStringExtra("task") == null){
+        if(intent == null || intent.getStringExtra("task") == null){
             Log.d(TAG, "No task found - collecting maximum");
             if(mAccelData) {
                 //Get a maximum of all data collected
