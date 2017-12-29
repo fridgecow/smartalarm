@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class NumberInputActivity extends WearableActivity {
 
@@ -54,8 +55,13 @@ public class NumberInputActivity extends WearableActivity {
             public void onClick(View view) {
                 final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(view.getContext());
 
-                prefs.edit().putInt(mKey, Integer.parseInt(mEditText.getText().toString())).apply();
-                finish();
+                try {
+                    prefs.edit().putInt(mKey, Integer.parseInt(mEditText.getText().toString())).apply();
+                    finish();
+                }catch(NumberFormatException e){
+                    Toast.makeText(view.getContext(), "Invalid Number!", Toast.LENGTH_SHORT);
+                }
+
             }
         });
         mEditText.setFilters(new InputFilter[]{new InputFilter() {
