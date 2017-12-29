@@ -254,53 +254,7 @@ public class TrackerService extends Service implements SensorEventListener {
                 mAccelMax = 0.0;
                 mHRMax = 0.0;
             }else if(task.equals("export")){
-                String url = "https://www.fridgecow.com/smartalarm/index.php";
-
-                //Get email address
-                final String email = mPreferences.getString("email", "");
-                if(email.equals("")){
-                    Toast.makeText(this, "Please input an email address", Toast.LENGTH_SHORT);
-                }else {
-                    StringRequest postRequest = new StringRequest(Request.Method.POST, url,
-                            new Response.Listener<String>() {
-                                @Override
-                                public void onResponse(String response) {
-                                    // response
-                                    Log.d("Response", response);
-                                }
-                            },
-                            new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-                                    // error
-                                    Log.d("Error.Response", error.getMessage());
-                                }
-                            }
-                    ) {
-                        @Override
-                        protected Map<String, String> getParams() {
-                            Map<String, String> params = new HashMap<String, String>();
-
-                            params.put("email", email);
-
-                            //Loop through datapoints to get CSV data
-                            StringBuilder csv = new StringBuilder("Unix Time,Motion,Heart Rate\n");
-                            for (int i = 0; i < mSleepMotion.size(); i++) {
-                                DataPoint d = mSleepMotion.get(i);
-                                if (mPreferences.getBoolean("hrm_use", true) && i < mSleepHR.size()) {
-                                    DataPoint h = mSleepHR.get(i);
-                                    csv.append(d.getX() + "," + d.getY() + "," + h.getY() + "\n");
-                                } else {
-                                    csv.append(d.getX() + "," + d.getY() + "\n");
-                                }
-                            }
-
-                            params.put("csv", csv.toString());
-                            return params;
-                        }
-                    };
-                    mQueue.add(postRequest);
-                }
+                exportData();
             }
         }
 
@@ -311,9 +265,64 @@ public class TrackerService extends Service implements SensorEventListener {
         Intent alarmIntent = new Intent(this, AlarmActivity.class);
         startActivity(alarmIntent);
 
+        //Auto export?
+        if(mPreferences.getBoolean("auto_export", true)){
+            exportData();
+        }
+
         //Stop tracking
         stopForeground(true);
         stopSelf();
+    }
+
+    private void exportData() {
+        String url = "https://www.fridgecow.com/smartalarm/index.php";
+
+        //Get email address
+        final String email = mPreferences.getString("email", "");
+        if(email.equals("")){
+            Toast.makeText(this, "Please input an email address", Toast.LENGTH_SHORT);
+        }else {
+            StringRequest postRequest = new StringRequest(Request.Method.POST, url,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            // response
+                            Log.d("Response", response);
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            // error
+                            Log.d("Error.Response", error.getMessage());
+                        }
+                    }
+            ) {
+                @Override
+                protected Map<String, String> getParams() {
+                    Map<String, String> params = new HashMap<String, String>();
+
+                    params.put("email", email);
+
+                    //Loop through datapoints to get CSV data
+                    StringBuilder csv = new StringBuilder("Unix Time,Motion,Heart Rate\n");
+                    for (int i = 0; i < mSleepMotion.size(); i++) {
+                        DataPoint d = mSleepMotion.get(i);
+                        if (mPreferences.getBoolean("hrm_use", true) && i < mSleepHR.size()) {
+                            DataPoint h = mSleepHR.get(i);
+                            csv.append(d.getX() + "," + d.getY() + "," + h.getY() + "\n");
+                        } else {
+                            csv.append(d.getX() + "," + d.getY() + "\n");
+                        }
+                    }
+
+                    params.put("csv", csv.toString());
+                    return params;
+                }
+            };
+            mQueue.add(postRequest);
+        }
     }
 
     @Nullable

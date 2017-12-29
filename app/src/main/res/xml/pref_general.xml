@@ -35,6 +35,16 @@
         android:defaultValue=""
         />
 
+    <SwitchPreference
+        android:key="auto_export"
+        android:title="@string/auto_export_title"
+        android:summaryOn="@string/auto_export_summary_on"
+        android:summaryOff="@string/auto_export_summary_off"
+        app:wear_iconOn="@drawable/ic_check"
+        app:wear_iconOff="@drawable/ic_cross"
+        android:defaultValue="true"
+        />
+
     <ListPreference
         android:key="acc_polling_rate"
         android:title="@string/acc_polling_rate_title"

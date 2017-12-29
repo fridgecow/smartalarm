@@ -40,4 +40,7 @@
     <string name="title_activity_text_input">TextInputActivity</string>
     <string name="text_input_text">Input Text</string>
     <string name="welcome">Click \"unpause\" or \"restart\" to start!</string>
+    <string name="auto_export_title">Auto Export</string>
+    <string name="auto_export_summary_on">Export with Smart Alarm</string>
+    <string name="auto_export_summary_off">Export manually</string>
 </resources>
