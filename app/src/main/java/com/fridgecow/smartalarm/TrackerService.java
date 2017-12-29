@@ -41,7 +41,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -54,7 +53,8 @@ public class TrackerService extends Service implements SensorEventListener {
     private static final int ONGOING_NOTIFICATION_ID = 10;
 
     //Things that need to be in configuration
-    private static final String OFFLINE_STORE = "sleepdata.csv";
+    private static final String OFFLINE_ACC = "sleepdata.csv";
+    private static final String OFFLINE_HRM = "sleephrm.csv";
     private static final double AWAKE_THRESH = 150.0; //Found by trial
 
     private SensorManager mSensorManager;
@@ -64,7 +64,6 @@ public class TrackerService extends Service implements SensorEventListener {
     private boolean mAccelData = false;
     private double[] mAccelLast = {0.0, 0.0, 0.0}; //Keeps previous sensor value
     private List<DataPoint> mSleepMotion; //Time -> max motion
-    private BufferedWriter mDataStore;
     private boolean mSleeping;
     private int mSleepCount;
     private int mAwakeCount = 0;
@@ -98,30 +97,8 @@ public class TrackerService extends Service implements SensorEventListener {
 
         //Fill SleepMotion
         try {
-            FileInputStream fis = openFileInput(OFFLINE_STORE);
-            BufferedReader br = new BufferedReader(new InputStreamReader(fis));
-
-            Log.d(TAG, "Reading from offline store");
-
-            String line = "";
-            while ((line = br.readLine()) != null) {
-                String[] data = line.split(",");
-                mSleepMotion.add(new DataPoint(Double.parseDouble(data[0]), Double.parseDouble(data[1])));
-            }
-            Collections.sort(mSleepMotion, new Comparator<DataPoint>() {
-                @Override
-                public int compare(DataPoint dataPoint, DataPoint t1) {
-                    if(dataPoint.getX() < t1.getX()){
-                        return -1;
-                    }else if(dataPoint.getX() == t1.getX()){
-                        return 0;
-                    }else{
-                        return 1;
-                    }
-                }
-            });
-
-            br.close();
+            readData(OFFLINE_ACC, mSleepMotion);
+            readData(OFFLINE_HRM, mSleepHR);
         }catch(FileNotFoundException e){
             Log.d(TAG, "No offline store found - starting from scratch");
         }catch(IOException e){
@@ -263,15 +240,19 @@ public class TrackerService extends Service implements SensorEventListener {
             if(task.equals("reset")){
                 //Empty offline store and mAccelData etc
                 try{
-                    mDataStore = new BufferedWriter(new OutputStreamWriter(openFileOutput(OFFLINE_STORE, 0)));
-                    mDataStore.close();
+                    List<DataPoint> emptyList = new ArrayList<>();
+                    saveData(OFFLINE_HRM, emptyList);
+                    saveData(OFFLINE_ACC, emptyList);
+
                 }catch(IOException e){
                     Log.d(TAG, "Failed to reset");
                 }
 
                 mSleepMotion = new ArrayList<>();
+                mSleepHR = new ArrayList<>();
                 mAccelData = false;
                 mAccelMax = 0.0;
+                mHRMax = 0.0;
             }else if(task.equals("export")){
                 String url = "https://www.fridgecow.com/smartalarm/index.php";
 
@@ -306,7 +287,7 @@ public class TrackerService extends Service implements SensorEventListener {
                             StringBuilder csv = new StringBuilder("Unix Time,Motion,Heart Rate\n");
                             for (int i = 0; i < mSleepMotion.size(); i++) {
                                 DataPoint d = mSleepMotion.get(i);
-                                if (mPreferences.getBoolean("hrm_use", true)) {
+                                if (mPreferences.getBoolean("hrm_use", true) && i < mSleepHR.size()) {
                                     DataPoint h = mSleepHR.get(i);
                                     csv.append(d.getX() + "," + d.getY() + "," + h.getY() + "\n");
                                 } else {
@@ -388,12 +369,8 @@ public class TrackerService extends Service implements SensorEventListener {
 
         //Write out to file
         try {
-            mDataStore = new BufferedWriter(new OutputStreamWriter(openFileOutput(OFFLINE_STORE, Context.MODE_APPEND)));
-            Log.d(TAG, "Writing to offline store");
-            for (DataPoint d : mSleepMotion) {
-                mDataStore.write(d.getX() + "," + d.getY() + "\n");
-            }
-            mDataStore.close();
+            saveData(OFFLINE_ACC, mSleepMotion);
+            saveData(OFFLINE_HRM, mSleepHR);
         }catch(IOException e){
             Log.d(TAG,"Failed to write out to offline store.");
         }
@@ -410,5 +387,42 @@ public class TrackerService extends Service implements SensorEventListener {
 
     public DataPoint[] getSleepHR(){
         return mSleepHR.toArray(new DataPoint[mSleepHR.size()]);
+    }
+
+    private void saveData(String file, List<DataPoint> list) throws IOException{
+        final BufferedWriter DataStore = new BufferedWriter(new OutputStreamWriter(openFileOutput(file, Context.MODE_APPEND)));
+        Log.d(TAG, "Writing to offline store");
+        for (DataPoint d : list) {
+            DataStore.write(d.getX() + "," + d.getY() + "\n");
+        }
+        DataStore.close();
+    }
+
+    private void readData(String file, List<DataPoint> list) throws IOException{
+        FileInputStream fis = openFileInput(file);
+        BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+
+        Log.d(TAG, "Reading from offline store");
+
+        String line = "";
+        while ((line = br.readLine()) != null) {
+            String[] data = line.split(",");
+            list.add(new DataPoint(Double.parseDouble(data[0]), Double.parseDouble(data[1])));
+        }
+
+        Collections.sort(list, new Comparator<DataPoint>() {
+            @Override
+            public int compare(DataPoint dataPoint, DataPoint t1) {
+                if(dataPoint.getX() < t1.getX()){
+                    return -1;
+                }else if(dataPoint.getX() == t1.getX()){
+                    return 0;
+                }else{
+                    return 1;
+                }
+            }
+        });
+
+        br.close();
     }
 }
