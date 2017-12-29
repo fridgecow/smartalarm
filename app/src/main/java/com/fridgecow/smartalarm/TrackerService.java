@@ -366,15 +366,18 @@ public class TrackerService extends Service implements SensorEventListener {
                 alarmManager.cancel(pendingIntent);
             }
 
-            //Set foreground notification
+            //Set notification
             Intent appIntent = new Intent(this, MainActivity.class);
-            PendingIntent appPending = PendingIntent.getService(this,  0, intent, 0);
+            PendingIntent appPending = PendingIntent.getActivity(this,  0, appIntent, 0);
             mNotification = new NotificationCompat.Builder(this, "sleeptracking")
                     .setContentTitle("Sleep Tracking Paused")
                     .setSmallIcon(R.mipmap.ic_launcher_foreground) //(icon is required)
                     .setContentIntent(appPending);
 
             mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Get back to bed!").build());
+
+            //Clear foreground
+            stopForeground(false);
         }
     }
 
@@ -446,6 +449,7 @@ public class TrackerService extends Service implements SensorEventListener {
     public boolean isRunning(){
         return mRunning;
     }
+
     public void stop(){
         if(mRunning){
             pause();
@@ -458,15 +462,17 @@ public class TrackerService extends Service implements SensorEventListener {
 
         //Stop service
         stopForeground(true);
-        stopSelf();
     }
 
     public void reset(){
         //Empty offline store and mAccelData etc
         try{
-            List<DataPoint> emptyList = new ArrayList<>();
-            saveData(OFFLINE_HRM, emptyList);
-            saveData(OFFLINE_ACC, emptyList);
+            //List<DataPoint> emptyList = new ArrayList<>();
+            final BufferedWriter DataStore = new BufferedWriter(new OutputStreamWriter(openFileOutput(OFFLINE_ACC, 0)));
+            DataStore.close();
+
+            final BufferedWriter DataStore2 = new BufferedWriter(new OutputStreamWriter(openFileOutput(OFFLINE_HRM, 0)));
+            DataStore2.close();
 
         }catch(IOException e){
             Log.d(TAG, "Failed to reset");

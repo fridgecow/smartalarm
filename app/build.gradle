@@ -34,4 +34,5 @@ dependencies {
     compile 'com.android.volley:volley:1.1.0'
     //For configuration
     compile 'me.denley.wearpreferenceactivity:wearpreferenceactivity:0.5.0'
+    implementation 'com.android.support:design:26.1.0'
 }

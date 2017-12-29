@@ -12,6 +12,7 @@ import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -35,11 +36,13 @@ public class MainActivity extends WearableActivity {
     private RequestQueue mQueue;
 
     private TextView mTextView;
-    private Button mStopButton;
+    private ImageButton mStopButton;
     private GraphView mGraphView;
     private Button mExportButton;
     private LinearLayout mGraphActions;
-    private Button mSettingsButton;
+    private TextView mGraphNoData;
+    private ImageButton mSettingsButton;
+    private ImageButton mResetButton;
 
     private LineGraphSeries<DataPoint> mAccelData;
     private LineGraphSeries<DataPoint> mHRData;
@@ -60,7 +63,8 @@ public class MainActivity extends WearableActivity {
             mBound = true;
             Log.d(TAG,"Bound to tracking service");
 
-            updateGraph();
+            //Update graphics
+            updateViews();
         }
 
         @Override
@@ -71,7 +75,6 @@ public class MainActivity extends WearableActivity {
             Log.d(TAG, "Unbound from tracking service");
         }
     };
-    private Button mResetButton;
 
 
     @Override
@@ -81,13 +84,14 @@ public class MainActivity extends WearableActivity {
 
         //mQueue = Volley.newRequestQueue(this);
 
-        mTextView = (TextView) findViewById(R.id.text);
-        mStopButton = (Button) findViewById(R.id.button2);
-        mResetButton = (Button) findViewById(R.id.button_reset);
-        mExportButton = (Button) findViewById(R.id.button4);
-        mGraphView = (GraphView) findViewById(R.id.graph);
-        mGraphActions = (LinearLayout) findViewById(R.id.graph_actions);
-        mSettingsButton = (Button) findViewById(R.id.button_settings);
+        mTextView = findViewById(R.id.text);
+        mStopButton = findViewById(R.id.button2);
+        mResetButton = findViewById(R.id.button_reset);
+        mExportButton = findViewById(R.id.button4);
+        mGraphView = findViewById(R.id.graph);
+        mGraphActions = findViewById(R.id.graph_actions);
+        mSettingsButton = findViewById(R.id.button_settings);
+        mGraphNoData = findViewById(R.id.nodata);
 
         //Start tracking service and bind to it
         Intent service = new Intent(this, TrackerService.class);
@@ -104,17 +108,13 @@ public class MainActivity extends WearableActivity {
         });
 
 
+        //TODO: Set these up after bound, and eliminate mBound checks.
         mExportButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if(mBound){
                     mService.exportData();
                 }
-                /*
-                Intent service = new Intent(view.getContext(), TrackerService.class);
-                service.putExtra("task", "export");
-                startService(service);
-                */
             }
         });
 
@@ -122,11 +122,8 @@ public class MainActivity extends WearableActivity {
             @Override
             public void onClick(View view) {
                 if(mBound){
-                    if(mService.playPause()){
-                        mStopButton.setText(R.string.button_stop);
-                    }else{
-                        mStopButton.setText(R.string.button_start);
-                    }
+                    mService.playPause();
+                    updateViews();
                 }
             }
         });
@@ -134,14 +131,14 @@ public class MainActivity extends WearableActivity {
         mResetButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                /*
-                Intent service = new Intent(view.getContext(), TrackerService.class);
-                service.putExtra("task", "reset");
-                startService(service);*/
                 if(mBound) {
-                    mService.reset();
-                    updateGraph();
+                    if(mService.isRunning()){
+                        mService.stop();
+                        updateViews();
+                    } else {
+                        mService.reset();
+                        updateGraph();
+                    }
                 }
             }
         });
@@ -168,26 +165,6 @@ public class MainActivity extends WearableActivity {
     }
 
     @Override
-    protected void onResume(){
-        super.onResume();
-
-        /*
-        if(!mBound){
-            mBinding = true;
-            bindService(new Intent(this, TrackerService.class), mConnection, 0);
-        }*/
-
-        updateGraph();
-
-        if(mBound) {
-            if (mService.isRunning()) {
-                mStopButton.setText(R.string.button_stop);
-            } else {
-                mStopButton.setText(R.string.button_start);
-            }
-        }
-    }
-    @Override
     public void onDestroy(){
         super.onDestroy();
 
@@ -209,6 +186,8 @@ public class MainActivity extends WearableActivity {
         //Is there actually any data?
         if(!mAccelData.isEmpty()) {
             mGraphActions.setVisibility(View.VISIBLE);
+            mGraphNoData.setVisibility(View.GONE);
+
             //Set Graph range
             mGraphView.getViewport().setMaxY(mAccelData.getHighestValueY());
             mGraphView.getViewport().setMinX(mAccelData.getLowestValueX());
@@ -217,6 +196,22 @@ public class MainActivity extends WearableActivity {
             mGraphView.getSecondScale().setMaxY(mHRData.getHighestValueY());
         }else{
             mGraphActions.setVisibility(View.GONE);
+            mGraphNoData.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void updateViews(){
+        updateGraph();
+
+        if(mBound){
+            if (mService.isRunning()) {
+                mStopButton.setImageResource(android.R.drawable.ic_media_pause);
+                mResetButton.setImageResource(android.R.drawable.alert_light_frame);
+                mTextView.setVisibility(View.GONE);
+            } else {
+                mStopButton.setImageResource(android.R.drawable.ic_media_play);
+                mResetButton.setImageResource(R.drawable.ic_cc_clear);
+            }
         }
     }
 }
