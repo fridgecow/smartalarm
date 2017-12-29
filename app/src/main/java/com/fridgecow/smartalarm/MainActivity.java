@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -138,6 +139,20 @@ public class MainActivity extends WearableActivity {
                 }
             }
         });
+
+        final View.OnLongClickListener ToolTipShower = new View.OnLongClickListener(){
+
+            @Override
+            public boolean onLongClick(View view) {
+                final ImageButton ib = (ImageButton) view;
+                Toast.makeText(view.getContext(), ib.getContentDescription(), Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        };
+        mResetButton.setOnLongClickListener(ToolTipShower);
+        mStopButton.setOnLongClickListener(ToolTipShower);
+        mSettingsButton.setOnLongClickListener(ToolTipShower);
+
 
         //Style graph
         mAccelData = new LineGraphSeries<>();
