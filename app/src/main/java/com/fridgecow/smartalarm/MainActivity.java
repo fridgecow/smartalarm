@@ -58,18 +58,17 @@ public class MainActivity extends WearableActivity {
             mService = binder.getService();
             mBinding = false;
             mBound = true;
-            Log.d("ServiceConnection","connected");
+            Log.d(TAG,"Bound to tracking service");
 
             updateGraph();
-            mStopButton.setText(R.string.button_stop);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
             mBinding = false;
             mBound = false;
-            mStopButton.setText(R.string.button_start);
-            //mGraphActions.setVisibility(View.GONE);
+
+            Log.d(TAG, "Unbound from tracking service");
         }
     };
     private Button mResetButton;
@@ -90,6 +89,12 @@ public class MainActivity extends WearableActivity {
         mGraphActions = (LinearLayout) findViewById(R.id.graph_actions);
         mSettingsButton = (Button) findViewById(R.id.button_settings);
 
+        //Start tracking service and bind to it
+        Intent service = new Intent(this, TrackerService.class);
+        startService(service);
+        mBinding = true;
+        bindService(service, mConnection, 0);
+
         mSettingsButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
@@ -102,34 +107,26 @@ public class MainActivity extends WearableActivity {
         mExportButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if(mBound){
+                    mService.exportData();
+                }
+                /*
                 Intent service = new Intent(view.getContext(), TrackerService.class);
                 service.putExtra("task", "export");
                 startService(service);
+                */
             }
         });
 
         mStopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent service = new Intent(view.getContext(), TrackerService.class);
-                if(mStopButton.getText() == getText(R.string.button_start)) {
-                    //Start service and bind to it
-                    startService(service);
-                    mBinding = true;
-                    bindService(service, mConnection, 0);
-                }else {
-                    //Stop service and unbind
-
-                    //Get data from service
-                    updateGraph();
-
-                    //Stop service
-                    if (mBound || mBinding) {
-                        unbindService(mConnection);
+                if(mBound){
+                    if(mService.playPause()){
+                        mStopButton.setText(R.string.button_stop);
+                    }else{
+                        mStopButton.setText(R.string.button_start);
                     }
-                    stopService(service);
-
-                    mStopButton.setText(R.string.button_start);
                 }
             }
         });
@@ -137,10 +134,15 @@ public class MainActivity extends WearableActivity {
         mResetButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                /*
                 Intent service = new Intent(view.getContext(), TrackerService.class);
                 service.putExtra("task", "reset");
-                startService(service);
-                updateGraph();
+                startService(service);*/
+                if(mBound) {
+                    mService.reset();
+                    updateGraph();
+                }
             }
         });
 
@@ -169,12 +171,21 @@ public class MainActivity extends WearableActivity {
     protected void onResume(){
         super.onResume();
 
+        /*
         if(!mBound){
             mBinding = true;
             bindService(new Intent(this, TrackerService.class), mConnection, 0);
-        }
+        }*/
 
         updateGraph();
+
+        if(mBound) {
+            if (mService.isRunning()) {
+                mStopButton.setText(R.string.button_stop);
+            } else {
+                mStopButton.setText(R.string.button_start);
+            }
+        }
     }
     @Override
     public void onDestroy(){
