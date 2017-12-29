@@ -33,8 +33,6 @@ import java.util.Map;
 public class MainActivity extends WearableActivity {
     private static final String TAG = TrackerService.class.getSimpleName();
 
-    private RequestQueue mQueue;
-
     private TextView mTextView;
     private ImageButton mStopButton;
     private GraphView mGraphView;
@@ -51,7 +49,7 @@ public class MainActivity extends WearableActivity {
     private boolean mBound;
     private boolean mBinding = false;
 
-    /** Defines callbacks for service binding, passed to bindService() */
+    /* Defines callbacks for service binding, passed to bindService() */
     private ServiceConnection mConnection = new ServiceConnection() {
 
         @Override
@@ -81,8 +79,6 @@ public class MainActivity extends WearableActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        //mQueue = Volley.newRequestQueue(this);
 
         mTextView = findViewById(R.id.text);
         mStopButton = findViewById(R.id.button2);

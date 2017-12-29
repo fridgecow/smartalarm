@@ -460,7 +460,7 @@ public class TrackerService extends Service implements SensorEventListener {
             exportData();
         }
 
-        //Stop service
+        //Stop service (from user perspective)
         stopForeground(true);
     }
 
