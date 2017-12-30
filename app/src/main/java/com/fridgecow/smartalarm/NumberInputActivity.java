@@ -23,6 +23,7 @@ public class NumberInputActivity extends WearableActivity {
     private static final String PREF_MIN = "min";
     private static final String PREF_MAX = "max";
     private static final String PREF_VAL = "val";
+    private static final String PREF_TITLE = "title";
 
 
     private EditText mEditText;
@@ -64,12 +65,19 @@ public class NumberInputActivity extends WearableActivity {
                 prefs.edit().putInt(mKey, number).apply();
             }
         });
+
+        mTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+            }
+        });
     }
 
     private void loadIntentExtras(){
         mKey = getIntent().getStringExtra(PREF_KEY);
         mIcon = getIntent().getIntExtra(PREF_ICON, 0);
-        mTitle = getIntent().getStringExtra(PREF_KEY);
+        mTitle = getIntent().getStringExtra(PREF_TITLE);
         mMin = getIntent().getIntExtra(PREF_MIN, Integer.MIN_VALUE);
         mMax = getIntent().getIntExtra(PREF_MAX, Integer.MAX_VALUE);
         mValue = getIntent().getIntExtra(PREF_VAL, 0);
@@ -84,7 +92,7 @@ public class NumberInputActivity extends WearableActivity {
 
         launcherIntent.putExtra(PREF_KEY, key);
         launcherIntent.putExtra(PREF_ICON, icon);
-        launcherIntent.putExtra(PREF_ICON, title);
+        launcherIntent.putExtra(PREF_TITLE, title);
         launcherIntent.putExtra(PREF_VAL, val);
         launcherIntent.putExtra(PREF_MIN, min);
         launcherIntent.putExtra(PREF_MAX, max);
