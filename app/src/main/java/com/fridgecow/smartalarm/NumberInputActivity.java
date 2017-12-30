@@ -29,6 +29,7 @@ public class NumberInputActivity extends WearableActivity {
     private Button mDoneButton;
 
     private String mKey;
+    private String mTitle;
     private int mIcon;
     private int mMin;
     private int mMax;
@@ -65,9 +66,7 @@ public class NumberInputActivity extends WearableActivity {
     private void loadIntentExtras(){
         mKey = getIntent().getStringExtra(PREF_KEY);
         mIcon = getIntent().getIntExtra(PREF_ICON, 0);
-
-        //Log.d("SmartAlarm", getIntent().getExtras().toString());
-
+        mTitle = getIntent().getStringExtra(PREF_KEY);
         mMin = getIntent().getIntExtra(PREF_MIN, Integer.MIN_VALUE);
         mMax = getIntent().getIntExtra(PREF_MAX, Integer.MAX_VALUE);
         mValue = getIntent().getIntExtra(PREF_VAL, 0);
@@ -77,11 +76,12 @@ public class NumberInputActivity extends WearableActivity {
         }
     }
 
-    public static Intent createIntent(Context context, String key, int icon, int val, int min, int max){
+    public static Intent createIntent(Context context, String key, String title, int icon, int val, int min, int max){
         final Intent launcherIntent = new Intent(context, NumberInputActivity.class);
 
         launcherIntent.putExtra(PREF_KEY, key);
         launcherIntent.putExtra(PREF_ICON, icon);
+        launcherIntent.putExtra(PREF_ICON, title);
         launcherIntent.putExtra(PREF_VAL, val);
         launcherIntent.putExtra(PREF_MIN, min);
         launcherIntent.putExtra(PREF_MAX, max);
