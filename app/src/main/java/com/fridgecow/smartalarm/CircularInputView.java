@@ -32,10 +32,13 @@ public class CircularInputView extends View {
     private double mAngle = 0;
 
     private TextPaint mTextPaint;
+    private TextPaint mHighlightPaint;
     private Paint mBackgroundPaint;
     private Paint mTransparentPaint;
 
     private float mTextHeight;
+    private float mHighlightHeight;
+
     private int mNumbers = 12;
     private int mNumber = mMin;
 
@@ -105,6 +108,10 @@ public class CircularInputView extends View {
         mTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setTextAlign(Paint.Align.LEFT);
 
+        mHighlightPaint = new TextPaint();
+        mHighlightPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
+        mHighlightPaint.setTextAlign(Paint.Align.LEFT);
+
         mBackgroundPaint = new Paint();
 
         mTransparentPaint = new Paint();
@@ -120,8 +127,14 @@ public class CircularInputView extends View {
         setTextSizeForWidth(mTextPaint, mThickness/2, Integer.toString(mMax));
         mTextPaint.setColor(mTextColor);
 
+        mHighlightPaint.setTextSize(mTextPaint.getTextSize() + 10);
+        mHighlightPaint.setColor(mTextColor);
+
         Paint.FontMetrics fontMetrics = mTextPaint.getFontMetrics();
         mTextHeight = fontMetrics.bottom;
+
+        Paint.FontMetrics fontMetrics1 = mHighlightPaint.getFontMetrics();
+        mHighlightHeight = fontMetrics1.bottom;
 
         //Background Paint
         mBackgroundPaint.setColor(mBackgroundColor);
@@ -181,6 +194,7 @@ public class CircularInputView extends View {
 
         final double angleDelta = (Math.PI * 2) / mNumbers;
         final int numberDelta = (mMax - mMin + 1) / mNumbers;
+        final double highlightWidth = Math.sin(angleDelta/(2*numberDelta))*mMidRadius;
         for(int i = 0; i < mNumbers; i++){
             final double angle = i*angleDelta + mAngle - Math.PI/2;
             final String number = Integer.toString(i*numberDelta + mMin);
@@ -188,9 +202,16 @@ public class CircularInputView extends View {
             final int x = (int) (mCenterX + Math.cos(angle)*mMidRadius);
             final int y = (int) (mCenterY + Math.sin(angle)*mMidRadius);
 
-            final float textWidth = mTextPaint.measureText(number);
-
-            canvas.drawText(number, x - textWidth/2, y + mTextHeight/2, mTextPaint);
+            //Log.d(TAG, "Delta from up: "+Math.abs(angle + Math.PI));
+            //Log.d(TAG, "Angle: "+Math.abs(angle + Math.PI/2)%(Math.PI*2));
+            if(y < mCenterY && Math.abs(x - mCenterX) < highlightWidth){
+                //Log.d(TAG, "Angle: "+Math.abs(angle + Math.PI/2)%(Math.PI*2));
+                final float textWidth = mHighlightPaint.measureText(number);
+                canvas.drawText(number, x - textWidth / 2, y + mHighlightHeight / 2, mHighlightPaint);
+            }else {
+                final float textWidth = mTextPaint.measureText(number);
+                canvas.drawText(number, x - textWidth / 2, y + mTextHeight / 2, mTextPaint);
+            }
         }
     }
 
@@ -320,10 +341,10 @@ public class CircularInputView extends View {
     }
 
     private int getNumberFromAngle(double angle){
-        int number = mMin - (int) Math.round(mMax*angle/(2*Math.PI));
+        int number = mMin - (int) Math.round((mMax - mMin + 1)*angle/(2*Math.PI));
 
         //Put number in range
-        number = Math.floorMod(number - mMin, mMax + 1) + mMin;
+        number = Math.floorMod(number - mMin, mMax - mMin + 1) + mMin;
         return number;
     }
 
@@ -333,8 +354,8 @@ public class CircularInputView extends View {
 
     public void setValue(int value){
         if(value >= mMin && value <= mMax){
-            mNumber = value;
-            setAngle( ((double) (mMin - value)/mMax)*Math.PI*2);
+            //mNumber = value;
+            setAngle(((mMin - value)/((double) (mMax - mMin + 1)))*Math.PI*2);
         }
 
     }
