@@ -18,6 +18,7 @@ It's pretty bad right now, but it'll get better! Please feel free to pull reques
 - Configurable polling rates
 - Smart Alarm
 - Export CSV to email address
+- Auto-Export
 
 ## Features I'd like:
 - ~Better number input (like in Alarms app)~ We have circular input!
