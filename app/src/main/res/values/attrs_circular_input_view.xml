@@ -1,0 +1,11 @@
+<resources>
+    <declare-styleable name="CircularInputView">
+        <attr name="backgroundColor" format="color" />
+        <attr name="textColor" format="color" />
+        <attr name="thickness" format="dimension" />
+
+        <attr name="min" format="integer" />
+        <attr name="max" format="integer" />
+        <attr name="value" format="integer" />
+    </declare-styleable>
+</resources>

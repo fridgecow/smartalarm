@@ -34,64 +34,32 @@ public class NumberInputActivity extends WearableActivity {
     private int mMax;
     private int mValue;
 
+    private TextView mTextView;
+    private CircularInputView mCircularInput;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_number_input);
 
-        //Initialize variables
-        mEditText = (EditText) findViewById(R.id.number_input);
-        mDoneButton = (Button) findViewById(R.id.done_button);
+        mTextView = findViewById(R.id.textView);
+        mCircularInput = findViewById(R.id.circInput);
 
-        //Get arguments
         loadIntentExtras();
 
-        mEditText.setText(Integer.toString(mValue));
+        mCircularInput.setMin(mMin);
+        mCircularInput.setMax(mMax);
+        mCircularInput.setValue(mValue);
 
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-        //Implement Listeners
-        mDoneButton.setOnClickListener(new View.OnClickListener() {
+        mCircularInput.setOnChangeListener(new CircularInputView.onChangeListener(){
             @Override
-            public void onClick(View view) {
-                final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(view.getContext());
-
-                try {
-                    prefs.edit().putInt(mKey, Integer.parseInt(mEditText.getText().toString())).apply();
-                    finish();
-                }catch(NumberFormatException e){
-                    Toast.makeText(view.getContext(), "Invalid Number!", Toast.LENGTH_SHORT);
-                }
-
+            public void onChange(int number){
+                mTextView.setText(Integer.toString(number));
+                prefs.edit().putInt(mKey, number).apply();
             }
         });
-        mEditText.setFilters(new InputFilter[]{new InputFilter() {
-            @Override
-            public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
-                // Compute new string after edition
-                StringBuilder builder = new StringBuilder(dest);
-                if (dstart > (dest.length() - 1)) {
-                    builder.append(source);
-                } else {
-                    builder.replace(dstart, dend, source.toString().substring(start, end));
-                }
-
-                String newString = builder.toString();
-
-                // Only valid when input is will be complete as intermediate input
-                // may be temporally invalid
-                try {
-                    int newValue = Integer.parseInt(newString);
-                    if ((mMin <= newValue) && (newValue <= mMax)) {
-                        Log.d("SmartAlarm", mMin + "," + mMax);
-                        return null; // Accept
-                    } else {
-                        return ""; // Reject
-                    }
-                } catch (NumberFormatException e) {
-                    return ""; // Reject input
-                }
-            }
-        }});
     }
 
     private void loadIntentExtras(){
