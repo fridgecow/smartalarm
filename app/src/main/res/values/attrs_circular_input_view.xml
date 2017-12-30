@@ -1,0 +1,7 @@
+<resources>
+    <declare-styleable name="CircularInputView">
+        <attr name="backgroundColor" format="color" />
+        <attr name="textColor" format="color" />
+        <attr name="thickness" format="dimension" />
+    </declare-styleable>
+</resources>
