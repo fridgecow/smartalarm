@@ -314,14 +314,14 @@ public class TrackerService extends Service implements SensorEventListener {
                         @Override
                         public void onResponse(String response) {
                             // response
-                            Log.d("Response", response);
+                            Log.d(TAG, "Success: "+response);
                         }
                     },
                     new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
                             // error
-                            Log.d("Error.Response", error.getMessage());
+                            Log.d(TAG, "Error exporting! "+error.getMessage());
                         }
                     }
             ) {
