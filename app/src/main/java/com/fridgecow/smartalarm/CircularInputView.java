@@ -180,15 +180,13 @@ public class CircularInputView extends View {
         canvas.drawCircle(mCenterX, mCenterY, mInnerRadius, mTransparentPaint);
 
         final double angleDelta = (Math.PI * 2) / mNumbers;
-        final double numberDelta = (mMax - mMin) / mNumbers;
+        final int numberDelta = (mMax - mMin + 1) / mNumbers;
         for(int i = 0; i < mNumbers; i++){
             final double angle = i*angleDelta + mAngle - Math.PI/2;
-            final String number = Integer.toString((int) (i*numberDelta + mMin));
+            final String number = Integer.toString(i*numberDelta + mMin);
 
             final int x = (int) (mCenterX + Math.cos(angle)*mMidRadius);
             final int y = (int) (mCenterY + Math.sin(angle)*mMidRadius);
-
-            //Log.d(TAG, "Drawing "+number+" at "+x+","+y);
 
             final float textWidth = mTextPaint.measureText(number);
 
@@ -203,11 +201,11 @@ public class CircularInputView extends View {
         final int action = event.getAction();
 
         if(action == MotionEvent.ACTION_DOWN){
-            Log.d(TAG, "Touch Down");
+            //Log.d(TAG, "Touch Down");
             //Check where touch occurred
             final double dist = Math.pow(x - mCenterX, 2) + Math.pow(y - mCenterY, 2);
             if(dist > Math.pow(mInnerRadius, 2)){
-                Log.d(TAG, "Within Boundary");
+                //Log.d(TAG, "Within Boundary");
                 mScrolling = true;
                 mLastX = x;
                 mLastY = y;
@@ -216,12 +214,11 @@ public class CircularInputView extends View {
                 mScrolling = false;
             }
         }else if(action == MotionEvent.ACTION_UP){
-            Log.d(TAG, "Touch Up");
+            //Log.d(TAG, "Touch Up");
             mScrolling = false;
             return true;
         }else if(action == MotionEvent.ACTION_MOVE && mScrolling){
             //Find angular difference between positions
-            //Use the cosine rule
             //Log.d(TAG, "X: "+x+" Y: "+y);
 
             final double curAngle = Math.atan2(mCenterY - y, mCenterX - x);
@@ -308,15 +305,26 @@ public class CircularInputView extends View {
         if(mAngle < 0){
             mAngle += Math.PI*2;
         }
+        //Log.d(TAG, "New angle: "+Math.toDegrees(angle));
 
         //Get number from angle around circle
-        int number = mMax - (int) ((angle / (Math.PI*2))*(mMax - mMin));
+        int number =getNumberFromAngle(mAngle);
 
-        if(mListener != null && number != mNumber){
+        if(number != mNumber){
             mNumber = number;
-            mListener.onChange(mNumber);
+            if(mListener != null) {
+                mListener.onChange(mNumber);
+            }
         }
         invalidate();
+    }
+
+    private int getNumberFromAngle(double angle){
+        int number = mMin - (int) Math.round(mMax*angle/(2*Math.PI));
+
+        //Put number in range
+        number = Math.floorMod(number - mMin, mMax + 1) + mMin;
+        return number;
     }
 
     public int getValue(){
@@ -324,9 +332,9 @@ public class CircularInputView extends View {
     }
 
     public void setValue(int value){
-        if(value > mMin && value < mMax){
+        if(value >= mMin && value <= mMax){
             mNumber = value;
-            setAngle( ((value - (double) mMin)/ (double) mMax)*Math.PI*2 );
+            setAngle( ((double) (mMin - value)/mMax)*Math.PI*2);
         }
 
     }
