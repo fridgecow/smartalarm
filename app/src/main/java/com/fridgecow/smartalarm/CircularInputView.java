@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
 import java.math.BigDecimal;
@@ -22,7 +23,7 @@ import java.math.BigDecimal;
 /**
  * TODO: document your custom view class.
  */
-public class CircularInputView extends View {
+public class CircularInputView extends ViewGroup {
     private static final String TAG = CircularInputView.class.getSimpleName();
     private int mTextColor = ContextCompat.getColor(getContext(), R.color.card_text_color);
     private int mBackgroundColor = ContextCompat.getColor(getContext(), R.color.card_default_background);
@@ -80,10 +81,66 @@ public class CircularInputView extends View {
         init(attrs, defStyle);
     }
 
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        //Measure self
+        mPaddingLeft = getPaddingLeft();
+        mPaddingTop = getPaddingTop();
+        mPaddingRight = getPaddingRight();
+        mPaddingBottom = getPaddingBottom();
+
+        mContentWidth = getWidth() - mPaddingLeft - mPaddingRight;
+        mContentHeight = getHeight() - mPaddingTop - mPaddingBottom;
+
+        mOuterRadius = Math.min(mContentWidth, mContentHeight) / 2;
+        mInnerRadius = mOuterRadius - mThickness;
+        mMidRadius = mOuterRadius - mThickness / 2;
+
+        mCenterX = getWidth() / 2;
+        mCenterY = getHeight() / 2;
+
+        //Lay views out linearly downwards, centering them vertically and horizontally
+        int totalHeight = 0;
+        final int count = getChildCount();
+
+        final int xSpec = MeasureSpec.makeMeasureSpec(mContentWidth, MeasureSpec.AT_MOST);
+        final int ySpec = MeasureSpec.makeMeasureSpec(mContentHeight, MeasureSpec.AT_MOST);
+
+        //Get total height
+        for(int i = 0; i < count; i++) {
+            View child = getChildAt(i);
+
+            if (child.getVisibility() == GONE){
+                continue;
+            }
+
+            child.measure(xSpec, ySpec);
+            totalHeight += child.getMeasuredHeight();
+        }
+
+        int curTop = mCenterY - totalHeight/2;
+        for(int i = 0; i < count; i++){
+            View child = getChildAt(i);
+            final int width = child.getMeasuredWidth();
+            final int height = child.getMeasuredHeight();
+
+            if (child.getVisibility() == GONE){
+                continue;
+            }
+
+            child.layout(mCenterX - width/2, curTop, mCenterX+width/2, curTop + height);
+            curTop += height;
+        }
+
+    }
+
     private void init(AttributeSet attrs, int defStyle) {
         // Load attributes
         final TypedArray a = getContext().obtainStyledAttributes(
                 attrs, R.styleable.CircularInputView, defStyle, 0);
+
+        //Custom drawing
+        setWillNotDraw(false);
 
         mTextColor = a.getColor(
                 R.styleable.CircularInputView_textColor, mTextColor);
@@ -165,27 +222,12 @@ public class CircularInputView extends View {
         super.onDraw(canvas);
 
         // TODO: cache as many computations as possible
-        //Measure self
-        mPaddingLeft = getPaddingLeft();
-        mPaddingTop = getPaddingTop();
-        mPaddingRight = getPaddingRight();
-        mPaddingBottom = getPaddingBottom();
 
         //Log.d(TAG, "Padding: "+mPaddingTop+","+mPaddingRight+","+mPaddingBottom+","+mPaddingLeft);
 
-        mContentWidth = canvas.getWidth() - mPaddingLeft - mPaddingRight;
-        mContentHeight = canvas.getHeight() - mPaddingTop - mPaddingBottom;
-
         //Log.d(TAG, "Dimensions: "+mContentWidth+","+mContentHeight);
 
-        mOuterRadius = Math.min(mContentWidth, mContentHeight) / 2;
-        mInnerRadius = mOuterRadius - mThickness;
-        mMidRadius = mOuterRadius - mThickness / 2;
 
-        //Log.d(TAG, "Radii: "+mInnerRadius+","+mMidRadius+","+mOuterRadius);
-
-        mCenterX = canvas.getWidth() / 2;
-        mCenterY = canvas.getHeight() / 2;
 
         //Log.d(TAG, "Center: "+mCenterX+","+mCenterY);
 

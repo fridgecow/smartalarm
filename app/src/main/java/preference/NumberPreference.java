@@ -65,6 +65,7 @@ public class NumberPreference extends WearPreference {
         final Intent inputMethod = NumberInputActivity.createIntent(
                 context,
                 getKey(),
+                getTitle(context).toString(),
                 getIcon(context),
                 getCurrentValue(context),
                 mMin,

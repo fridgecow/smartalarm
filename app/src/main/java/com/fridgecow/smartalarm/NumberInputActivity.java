@@ -36,6 +36,7 @@ public class NumberInputActivity extends WearableActivity {
     private int mValue;
 
     private TextView mTextView;
+    private TextView mTitleView;
     private CircularInputView mCircularInput;
 
     @Override
@@ -44,10 +45,12 @@ public class NumberInputActivity extends WearableActivity {
         setContentView(R.layout.activity_number_input);
 
         mTextView = findViewById(R.id.textView);
+        mTitleView = findViewById(R.id.number_title);
         mCircularInput = findViewById(R.id.circInput);
 
         loadIntentExtras();
 
+        mTitleView.setText(mTitle);
         mCircularInput.setMin(mMin);
         mCircularInput.setMax(mMax);
         mCircularInput.setValue(mValue);
