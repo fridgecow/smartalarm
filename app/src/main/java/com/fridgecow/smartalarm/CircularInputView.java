@@ -94,6 +94,10 @@ public class CircularInputView extends View {
                 R.styleable.CircularInputView_thickness,
                 mThickness);
 
+        mMin = a.getInt(R.styleable.CircularInputView_min, mMin);
+        mMax = a.getInt(R.styleable.CircularInputView_max, mMax);
+        mNumber = a.getInt(R.styleable.CircularInputView_value, mNumber);
+
         a.recycle();
 
         // Set up a default TextPaint object
@@ -255,6 +259,7 @@ public class CircularInputView extends View {
 
     public void setMin(int min) {
         this.mMin = min;
+        invalidate();
     }
 
     public int getMax(){
@@ -263,6 +268,8 @@ public class CircularInputView extends View {
 
     public void setMax(int max){
         mMax = max;
+        invalidatePaintAndMeasurements();
+        invalidate();
     }
 
     public void setThickness(int thickness){
@@ -312,8 +319,16 @@ public class CircularInputView extends View {
         invalidate();
     }
 
-    public int getNumber(){
+    public int getValue(){
         return mNumber;
+    }
+
+    public void setValue(int value){
+        if(value > mMin && value < mMax){
+            mNumber = value;
+            setAngle( ((value - (double) mMin)/ (double) mMax)*Math.PI*2 );
+        }
+
     }
 
     public boolean canScrollHorizontally(int direction) {

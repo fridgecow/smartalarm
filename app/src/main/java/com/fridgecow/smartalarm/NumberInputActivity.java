@@ -45,10 +45,19 @@ public class NumberInputActivity extends WearableActivity {
         mTextView = findViewById(R.id.textView);
         mCircularInput = findViewById(R.id.circInput);
 
+        loadIntentExtras();
+
+        mCircularInput.setMin(mMin);
+        mCircularInput.setMax(mMax);
+        mCircularInput.setValue(mValue);
+
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
         mCircularInput.setOnChangeListener(new CircularInputView.onChangeListener(){
             @Override
             public void onChange(int number){
                 mTextView.setText(Integer.toString(number));
+                prefs.edit().putInt(mKey, number).apply();
             }
         });
         /*
