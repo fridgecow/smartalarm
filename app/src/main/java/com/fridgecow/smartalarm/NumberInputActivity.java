@@ -34,11 +34,24 @@ public class NumberInputActivity extends WearableActivity {
     private int mMax;
     private int mValue;
 
+    private TextView mTextView;
+    private CircularInputView mCircularInput;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_number_input);
 
+        mTextView = findViewById(R.id.textView);
+        mCircularInput = findViewById(R.id.circInput);
+
+        mCircularInput.setOnChangeListener(new CircularInputView.onChangeListener(){
+            @Override
+            public void onChange(int number){
+                mTextView.setText(Integer.toString(number));
+            }
+        });
+        /*
         //Initialize variables
         mEditText = (EditText) findViewById(R.id.number_input);
         mDoneButton = (Button) findViewById(R.id.done_button);
@@ -92,6 +105,9 @@ public class NumberInputActivity extends WearableActivity {
                 }
             }
         }});
+        */
+
+
     }
 
     private void loadIntentExtras(){

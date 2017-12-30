@@ -10,37 +10,22 @@
     tools:context="com.fridgecow.smartalarm.NumberInputActivity"
     tools:deviceIds="wear">
 
-    <ScrollView
+    <com.fridgecow.smartalarm.CircularInputView
+        android:id="@+id/circInput"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:boxedEdges="all">
+        app:backgroundColor="@color/green"
+        app:textColor="@color/white"
+        app:thickness="@dimen/circular_input_thickness">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" >
+    </com.fridgecow.smartalarm.CircularInputView>
 
-            <TextView
-                android:id="@+id/text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:text="@string/number_input_text" />
-
-            <EditText
-                android:id="@+id/number_input"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ems="10"
-                android:inputType="number" />
-
-            <Button
-                android:id="@+id/done_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/form_done" />
-        </LinearLayout>
-    </ScrollView>
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical|center"
+        android:text="TextView" />
 
 </android.support.wear.widget.BoxInsetLayout>
 

@@ -8,16 +8,22 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.support.v4.content.ContextCompat;
+import android.support.wear.widget.SwipeDismissFrameLayout;
 import android.text.TextPaint;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.LinearLayout;
+
+import java.math.BigDecimal;
 
 /**
  * TODO: document your custom view class.
  */
 public class CircularInputView extends View {
+    private static final String TAG = CircularInputView.class.getSimpleName();
     private int mTextColor = ContextCompat.getColor(getContext(), R.color.card_text_color);
     private int mBackgroundColor = ContextCompat.getColor(getContext(), R.color.card_default_background);
     private int mThickness = 10;
@@ -31,6 +37,7 @@ public class CircularInputView extends View {
 
     private float mTextHeight;
     private int mNumbers = 12;
+    private int mNumber = mMin;
 
     //Touch related
     private boolean mScrolling = false;
@@ -50,6 +57,10 @@ public class CircularInputView extends View {
     private int mCenterX;
     private int mCenterY;
 
+    public static abstract class onChangeListener{
+        public abstract void onChange(int newNumber);
+    }
+    private onChangeListener mListener;
 
     public CircularInputView(Context context) {
         super(context);
@@ -102,7 +113,7 @@ public class CircularInputView extends View {
 
     private void invalidatePaintAndMeasurements() {
         //TextPaint
-        setTextSizeForWidth(mTextPaint, mThickness, Integer.toString(mMax));
+        setTextSizeForWidth(mTextPaint, mThickness/2, Integer.toString(mMax));
         mTextPaint.setColor(mTextColor);
 
         Paint.FontMetrics fontMetrics = mTextPaint.getFontMetrics();
@@ -110,22 +121,6 @@ public class CircularInputView extends View {
 
         //Background Paint
         mBackgroundPaint.setColor(mBackgroundColor);
-
-        //Measure self
-        mPaddingLeft = getPaddingLeft();
-        mPaddingTop = getPaddingTop();
-        mPaddingRight = getPaddingRight();
-        mPaddingBottom = getPaddingBottom();
-
-        mContentWidth = getWidth() - mPaddingLeft - mPaddingRight;
-        mContentHeight = getHeight() - mPaddingTop - mPaddingBottom;
-
-        mOuterRadius = Math.min(mContentWidth, mContentHeight);
-        mInnerRadius = mOuterRadius - mThickness;
-        mMidRadius = mOuterRadius - mThickness / 2;
-
-        mCenterX = getWidth() / 2;
-        mCenterY = getHeight() / 2;
     }
 
     @Override
@@ -133,8 +128,7 @@ public class CircularInputView extends View {
         super.onFinishInflate();
     }
     /* stackoverflow.com/questions/12166476/android-canvas-drawtext-set-font-size-from-width */
-    private static void setTextSizeForWidth(Paint paint, float desiredWidth,
-                                            String text) {
+    private static void setTextSizeForWidth(Paint paint, float desiredWidth, String text) {
         final float testTextSize = 48f;
 
         // Get the bounds of the text, using our testTextSize.
@@ -154,6 +148,30 @@ public class CircularInputView extends View {
         super.onDraw(canvas);
 
         // TODO: cache as many computations as possible
+        //Measure self
+        mPaddingLeft = getPaddingLeft();
+        mPaddingTop = getPaddingTop();
+        mPaddingRight = getPaddingRight();
+        mPaddingBottom = getPaddingBottom();
+
+        //Log.d(TAG, "Padding: "+mPaddingTop+","+mPaddingRight+","+mPaddingBottom+","+mPaddingLeft);
+
+        mContentWidth = canvas.getWidth() - mPaddingLeft - mPaddingRight;
+        mContentHeight = canvas.getHeight() - mPaddingTop - mPaddingBottom;
+
+        //Log.d(TAG, "Dimensions: "+mContentWidth+","+mContentHeight);
+
+        mOuterRadius = Math.min(mContentWidth, mContentHeight) / 2;
+        mInnerRadius = mOuterRadius - mThickness;
+        mMidRadius = mOuterRadius - mThickness / 2;
+
+        //Log.d(TAG, "Radii: "+mInnerRadius+","+mMidRadius+","+mOuterRadius);
+
+        mCenterX = canvas.getWidth() / 2;
+        mCenterY = canvas.getHeight() / 2;
+
+        //Log.d(TAG, "Center: "+mCenterX+","+mCenterY);
+
         canvas.drawCircle(mCenterX, mCenterY, mOuterRadius, mBackgroundPaint);
         canvas.drawCircle(mCenterX, mCenterY, mInnerRadius, mTransparentPaint);
 
@@ -164,11 +182,13 @@ public class CircularInputView extends View {
             final String number = Integer.toString((int) (i*numberDelta + mMin));
 
             final int x = (int) (mCenterX + Math.cos(angle)*mMidRadius);
-            final int y = (int) (mCenterY + Math.cos(angle)*mMidRadius);
+            final int y = (int) (mCenterY + Math.sin(angle)*mMidRadius);
+
+            //Log.d(TAG, "Drawing "+number+" at "+x+","+y);
 
             final float textWidth = mTextPaint.measureText(number);
 
-            canvas.drawText(number, x - textWidth/2, y - mTextHeight/2, mTextPaint);
+            canvas.drawText(number, x - textWidth/2, y + mTextHeight/2, mTextPaint);
         }
     }
 
@@ -179,9 +199,11 @@ public class CircularInputView extends View {
         final int action = event.getAction();
 
         if(action == MotionEvent.ACTION_DOWN){
+            Log.d(TAG, "Touch Down");
             //Check where touch occurred
             final double dist = Math.pow(x - mCenterX, 2) + Math.pow(y - mCenterY, 2);
-            if(dist > mInnerRadius){
+            if(dist > Math.pow(mInnerRadius, 2)){
+                Log.d(TAG, "Within Boundary");
                 mScrolling = true;
                 mLastX = x;
                 mLastY = y;
@@ -190,27 +212,41 @@ public class CircularInputView extends View {
                 mScrolling = false;
             }
         }else if(action == MotionEvent.ACTION_UP){
+            Log.d(TAG, "Touch Up");
             mScrolling = false;
             return true;
-        }else if(action == MotionEvent.ACTION_MOVE){
+        }else if(action == MotionEvent.ACTION_MOVE && mScrolling){
             //Find angular difference between positions
             //Use the cosine rule
+            //Log.d(TAG, "X: "+x+" Y: "+y);
 
-            //Todo: cache b and bsq to half the amount of work
-            final double asq = Math.pow(mCenterX - mLastX, 2) + Math.pow(mCenterY - mLastY, 2);
-            final double bsq = Math.pow(mCenterX - x, 2) + Math.pow(mCenterY - y, 2);
-            final double csq = Math.pow(mLastX - x, 2) + Math.pow(mLastY - y, 2);
+            final double curAngle = Math.atan2(mCenterY - y, mCenterX - x);
+            final double lastAngle = Math.atan2(mCenterY - mLastY, mCenterX - mLastX);
 
-            final double a = Math.sqrt(asq);
-            final double b = Math.sqrt(bsq);
+            //Log.d(TAG, "Current: "+curAngle+" Last: "+lastAngle);
 
-            final double cosdA = (asq + bsq - csq) / 2*a*b;
-            setAngle(getAngle() + Math.acos(cosdA));
+            final double dAngle = Math.atan2(Math.sin(curAngle-lastAngle), Math.cos(curAngle-lastAngle));
+
+            //Log.d(TAG, "Delta: "+dAngle);
+
+            setAngle(getAngle() + dAngle);
+
+            mLastX = x;
+            mLastY = y;
 
             return true;
         }
 
         return super.onTouchEvent(event);
+    }
+
+    public void setOnChangeListener(onChangeListener listener){
+        mListener = listener;
+        listener.onChange(mNumber);
+    }
+
+    public void clearOnChangeListener(){
+        mListener = null;
     }
 
     public int getMin() {
@@ -260,7 +296,27 @@ public class CircularInputView extends View {
         return mAngle;
     }
 
-    public void setAngle(double mAngle) {
-        this.mAngle = mAngle;
+    public void setAngle(double angle) {
+        mAngle = angle % (Math.PI*2);
+        if(mAngle < 0){
+            mAngle += Math.PI*2;
+        }
+
+        //Get number from angle around circle
+        int number = mMax - (int) ((angle / (Math.PI*2))*(mMax - mMin));
+
+        if(mListener != null && number != mNumber){
+            mNumber = number;
+            mListener.onChange(mNumber);
+        }
+        invalidate();
+    }
+
+    public int getNumber(){
+        return mNumber;
+    }
+
+    public boolean canScrollHorizontally(int direction) {
+        return mScrolling;
     }
 }

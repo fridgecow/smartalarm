@@ -32,7 +32,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class MainActivity extends WearableActivity {
-    private static final String TAG = TrackerService.class.getSimpleName();
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private TextView mTextView;
     private ImageButton mStopButton;
