@@ -32,11 +32,12 @@
     <string name="smartalarm_settings_title">Smart Alarm</string>
     <string name="smartalarm_settings_window">Alarm Window (mins)</string>
     <string name="smartalarm_settings_min">Alarm Minute</string>
+    <string name="smartalarm_settings_snooze">Snooze (mins)</string>
     <string name="title_activity_alarm">AlarmActivity</string>
 
     <!-- Alarm Activity -->
     <string name="alarm_title">Smart Alarm!</string>
-    <string name="alarm_done">Done</string>
+    <string name="alarm_done">✓</string>
     <string name="title_activity_text_input">TextInputActivity</string>
     <string name="text_input_text">Input Text</string>
     <string name="welcome">Click \"play\" to start recording!</string>
@@ -45,4 +46,5 @@
     <string name="auto_export_summary_off">Export manually</string>
     <string name="graph_no_data">No data yet - go to sleep!</string>
     <string name="title_activity_time_input">Time Input</string>
+    <string name="alarm_snooze">Snooze</string>
 </resources>

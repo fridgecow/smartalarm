@@ -27,6 +27,14 @@
         android:defaultValue="30"
         />
 
+    <NumberPreference
+        android:key="smartalarm_snooze"
+        android:title="@string/smartalarm_settings_snooze"
+        android:min="0"
+        android:max="59"
+        android:defaultValue="5"
+        />
+
     <TextPreference
         android:key="email"
         android:title="Export Email"
