@@ -9,8 +9,8 @@
         android:title="@string/smartalarm_settings_title"
         android:summaryOn="@string/smartalarm_summary_on"
         android:summaryOff="@string/smartalarm_summary_off"
-        app:wear_iconOn="@drawable/ic_check"
-        app:wear_iconOff="@drawable/ic_cross"
+        app:wear_iconOn="@drawable/ic_check_white"
+        app:wear_iconOff="@drawable/ic_cross_white"
         android:defaultValue="true" />
 
     <TimePreference
@@ -38,8 +38,8 @@
         android:title="@string/auto_export_title"
         android:summaryOn="@string/auto_export_summary_on"
         android:summaryOff="@string/auto_export_summary_off"
-        app:wear_iconOn="@drawable/ic_check"
-        app:wear_iconOff="@drawable/ic_cross"
+        app:wear_iconOn="@drawable/ic_check_white"
+        app:wear_iconOff="@drawable/ic_cross_white"
         android:defaultValue="true"
         />
 
@@ -69,8 +69,8 @@
         android:title="@string/hrm_settings_title"
         android:summaryOn="@string/hrm_summary_on"
         android:summaryOff="@string/hrm_summary_off"
-        app:wear_iconOn="@drawable/ic_check"
-        app:wear_iconOff="@drawable/ic_cross"
+        app:wear_iconOn="@drawable/ic_check_white"
+        app:wear_iconOff="@drawable/ic_cross_white"
         android:defaultValue="true"
         />
 
