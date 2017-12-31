@@ -80,6 +80,8 @@ public class TrackerService extends Service implements SensorEventListener {
     private RequestQueue mQueue;
     private boolean mRunning;
 
+    private SharedPreferences.OnSharedPreferenceChangeListener mPreferenceListener;
+
 
     //Public interface to bind to this service
     public class LocalBinder extends Binder {
@@ -107,6 +109,17 @@ public class TrackerService extends Service implements SensorEventListener {
         }catch(IOException e){
             Log.d(TAG, "Problem reading offline store");
         }
+
+        //Allow preferences to be changed on-the-fly
+        mPreferenceListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                if(key.equals("smartalarm_time")){
+                    configureAlarm();
+                }
+            }
+        };
+        mPreferences.registerOnSharedPreferenceChangeListener(mPreferenceListener);
     }
 
     @Override
@@ -251,6 +264,8 @@ public class TrackerService extends Service implements SensorEventListener {
         }catch(IOException e){
             Log.d(TAG,"Failed to write out to offline store.");
         }
+
+        mPreferences.unregisterOnSharedPreferenceChangeListener(mPreferenceListener);
     }
 
     @Override
