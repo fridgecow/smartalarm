@@ -146,10 +146,12 @@ public class TrackerService extends Service implements SensorEventListener {
                     if(mSmartAlarm != null){
                         Date now = Calendar.getInstance().getTime();
 
+                        int window = mPreferences.getInt("smartalarm_window", 30);
+
                         //Check alarm range
                         if(now.after(mSmartAlarm.getTime())){
                             activateAlarm();
-                        }if(mSmartAlarm.getTime().getTime() - now.getTime() <= 30*60*1000){
+                        }else if(mSmartAlarm.getTime().getTime() - now.getTime() <= window*60*1000){
                             Log.d(TAG, "In alarm range");
 
                             //Get mean accel motion
