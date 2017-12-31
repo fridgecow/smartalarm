@@ -57,6 +57,7 @@ public class TrackerService extends Service implements SensorEventListener {
     private static final String TRIGGER_AWAKE = "awake";
     private static final String TRIGGER_ASLEEP = "asleep";
     private static final String TRIGGER_ALARM = "alarm";
+    private static final String TRIGGER_TRACKINGSTART = "tracking";
 
     //Things that need to be in configuration
     private static final String OFFLINE_ACC = "sleepdata.csv";
@@ -145,6 +146,8 @@ public class TrackerService extends Service implements SensorEventListener {
                                 mSleeping = true;
                                 mAwakeCount = 0;
 
+                                triggerIFTTT(TRIGGER_ASLEEP);
+
                                 //Update notification
                                 mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("You're asleep!").build());
                             }
@@ -216,6 +219,8 @@ public class TrackerService extends Service implements SensorEventListener {
     private void activateAlarm() {
         Intent alarmIntent = new Intent(this, AlarmActivity.class);
         startActivity(alarmIntent);
+
+        triggerIFTTT(TRIGGER_ALARM);
 
         //We're done
         stop();
@@ -332,7 +337,7 @@ public class TrackerService extends Service implements SensorEventListener {
         //Get email address
         final String email = mPreferences.getString("email", "");
         if(email.equals("")){
-            Toast.makeText(this, "Please input an email address", Toast.LENGTH_SHORT);
+            Toast.makeText(this, "Please input an email address", Toast.LENGTH_SHORT).show();
         }else {
             StringRequest postRequest = new StringRequest(Request.Method.POST, url,
                     new Response.Listener<String>() {
@@ -458,6 +463,8 @@ public class TrackerService extends Service implements SensorEventListener {
 
             int pollRate = mPreferences.getInt("datapoint_rate", 1);
             alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), pollRate*60000, pingIntent);
+
+            triggerIFTTT(TRIGGER_TRACKINGSTART);
         }
     }
 
@@ -518,7 +525,42 @@ public class TrackerService extends Service implements SensorEventListener {
         }
     }
 
-    public void triggerIFTTT(String type){
+    public void triggerIFTTT(final String type){
+        //Get maker key
+        final String ifttt_key = mPreferences.getString("ifttt_key", "");
+        if(ifttt_key.equals("")) {
+            return;
+        }
+
+        String url = "https://maker.ifttt.com/trigger/smartalarm_"+type+"/with/key/"+ifttt_key;
+
+        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        // response
+                        Log.d(TAG, "IFTTT: "+response);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // error
+                        Log.d(TAG, "Error with IFTTT! "+error.getMessage());
+                    }
+                }
+        ) {
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<String, String>();
+
+                //Put different params based on type
+                //No params necessary right now!
+
+                return params;
+            }
+        };
+        mQueue.add(postRequest);
 
     }
 }
