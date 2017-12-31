@@ -19,10 +19,11 @@ It's pretty bad right now, but it'll get better! Please feel free to pull reques
 - Smart Alarm
 - Export CSV to email address
 - Auto-Export
+- [IFTTT integration!](https://github.com/fridgecow/smartalarm/wiki/ifttt)
 
 ## Features I'd like:
 - ~Better number input (like in Alarms app)~ We have circular input!
-- IFTTT integration
+- ~IFTTT integration~ [Documentation is here!](https://github.com/fridgecow/smartalarm/wiki/ifttt)
 - Google Fit integration
 - Cleaner interface (and code)
 - Multiple alarms and configurable alarm period - Calendar integration?
