@@ -13,20 +13,18 @@
         app:wear_iconOff="@drawable/ic_cross"
         android:defaultValue="true" />
 
-    <NumberPreference
-        android:key="smartalarm_hr"
-        android:title="@string/smartalarm_settings_hour"
-        android:min="0"
-        android:max="23"
-        android:defaultValue="7"
+    <TimePreference
+        android:key="smartalarm_time"
+        android:title="Alarm Latest"
+        android:defaultValue="700"
         />
 
     <NumberPreference
-        android:key="smartalarm_min"
-        android:title="@string/smartalarm_settings_min"
+        android:key="smartalarm_window"
+        android:title="@string/smartalarm_settings_window"
         android:min="0"
         android:max="59"
-        android:defaultValue="0"
+        android:defaultValue="30"
         />
 
     <TextPreference

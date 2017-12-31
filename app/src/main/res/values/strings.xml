@@ -30,7 +30,7 @@
     <string name="smartalarm_summary_off">Disabled</string>
     <string name="smartalarm_summary_on">Enabled</string>
     <string name="smartalarm_settings_title">Smart Alarm</string>
-    <string name="smartalarm_settings_hour">Alarm Hour</string>
+    <string name="smartalarm_settings_window">Alarm Window (mins)</string>
     <string name="smartalarm_settings_min">Alarm Minute</string>
     <string name="title_activity_alarm">AlarmActivity</string>
 
@@ -44,4 +44,5 @@
     <string name="auto_export_summary_on">Export with Smart Alarm</string>
     <string name="auto_export_summary_off">Export manually</string>
     <string name="graph_no_data">No data yet - go to sleep!</string>
+    <string name="title_activity_time_input">Time Input</string>
 </resources>

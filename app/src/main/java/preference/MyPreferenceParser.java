@@ -14,6 +14,8 @@ public class MyPreferenceParser extends XmlPreferenceParser {
             return new NumberPreference(context, attrs);
         } else if(preferenceType.equals("TextPreference")) {
             return new TextPreference(context, attrs);
+        }else if(preferenceType.equals("TimePreference")) {
+            return new TimePreference(context, attrs);
         }else{
             return null;
         }

@@ -62,7 +62,14 @@ public class NumberInputActivity extends WearableActivity {
             @Override
             public void onChange(int number){
                 mTextView.setText(Integer.toString(number));
-                prefs.edit().putInt(mKey, number).apply();
+
+                if(mKey == null || mKey.isEmpty()) {
+                    Intent _result = new Intent();
+                    _result.putExtra("value", number);
+                    setResult(RESULT_OK, _result);
+                }else{
+                    prefs.edit().putInt(mKey, number).apply();
+                }
             }
         });
 
@@ -81,10 +88,6 @@ public class NumberInputActivity extends WearableActivity {
         mMin = getIntent().getIntExtra(PREF_MIN, Integer.MIN_VALUE);
         mMax = getIntent().getIntExtra(PREF_MAX, Integer.MAX_VALUE);
         mValue = getIntent().getIntExtra(PREF_VAL, 0);
-
-        if(mKey == null || mKey.isEmpty()){
-            throw new IllegalArgumentException("Missing preference key in Intent.");
-        }
     }
 
     public static Intent createIntent(Context context, String key, String title, int icon, int val, int min, int max){

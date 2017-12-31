@@ -44,6 +44,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import preference.TimePreference;
+
 /**
  * Created by tom on 23/12/17.
  */
@@ -488,17 +490,7 @@ public class TrackerService extends Service implements SensorEventListener {
     public void configureAlarm(){
         //Set up smartalarm
         if(mPreferences.getBoolean("smartalarm_use", true)){
-            mSmartAlarm = Calendar.getInstance();
-            mSmartAlarm.set(Calendar.HOUR_OF_DAY, mPreferences.getInt("smartalarm_hr", 7));
-            mSmartAlarm.set(Calendar.MINUTE, mPreferences.getInt("smartalarm_min", 0));
-            mSmartAlarm.set(Calendar.SECOND, 0);
-
-            //If we're after the alarm, set the alarm for tomorrow
-            Date now = Calendar.getInstance().getTime();
-            if(now.after(mSmartAlarm.getTime())){
-                mSmartAlarm.set(Calendar.DAY_OF_YEAR, mSmartAlarm.get(Calendar.DAY_OF_YEAR) + 1);
-            }
-
+            mSmartAlarm = TimePreference.parseTime(mPreferences.getInt("smartalarm_time", 700), true);
             Log.d(TAG, "Alarm set for "+mSmartAlarm.getTime());
         }
     }

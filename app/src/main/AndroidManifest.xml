@@ -51,7 +51,11 @@
             android:label="@string/title_activity_alarm" />
         <activity
             android:name=".TextInputActivity"
-            android:label="@string/title_activity_text_input"></activity>
+            android:label="@string/title_activity_text_input" />
+
+        <activity
+            android:name=".TimeInputActivity"
+            android:label="@string/title_activity_time_input" />
     </application>
 
 </manifest>
