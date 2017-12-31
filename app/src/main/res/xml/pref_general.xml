@@ -33,6 +33,12 @@
         android:defaultValue=""
         />
 
+    <TextPreference
+        android:key="ifttt_key"
+        android:title="IFTTT Maker Key"
+        android:defaultValue=""
+        />
+
     <SwitchPreference
         android:key="auto_export"
         android:title="@string/auto_export_title"

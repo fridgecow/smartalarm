@@ -54,6 +54,10 @@ public class TrackerService extends Service implements SensorEventListener {
     private static final String TAG = TrackerService.class.getSimpleName();
     private static final int ONGOING_NOTIFICATION_ID = 10;
 
+    private static final String TRIGGER_AWAKE = "awake";
+    private static final String TRIGGER_ASLEEP = "asleep";
+    private static final String TRIGGER_ALARM = "alarm";
+
     //Things that need to be in configuration
     private static final String OFFLINE_ACC = "sleepdata.csv";
     private static final String OFFLINE_HRM = "sleephrm.csv";
@@ -152,6 +156,8 @@ public class TrackerService extends Service implements SensorEventListener {
                         if(mAwakeCount > 1) { //Allow 1 false-positive
                             mSleeping = false;
                             mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Good morning!").build());
+
+                            triggerIFTTT(TRIGGER_AWAKE);
                         }
                     }
 
@@ -510,5 +516,9 @@ public class TrackerService extends Service implements SensorEventListener {
             mSmartAlarm = TimePreference.parseTime(mPreferences.getInt("smartalarm_time", 700), true);
             Log.d(TAG, "Alarm set for "+mSmartAlarm.getTime());
         }
+    }
+
+    public void triggerIFTTT(String type){
+
     }
 }
