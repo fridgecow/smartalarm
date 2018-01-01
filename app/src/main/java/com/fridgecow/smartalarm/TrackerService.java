@@ -50,7 +50,7 @@ import preference.TimePreference;
  * Created by tom on 23/12/17.
  */
 
-public class TrackerService extends Service implements SensorEventListener {
+public class TrackerService extends Service implements SensorEventListener, AlarmManager.OnAlarmListener {
     private static final String TAG = TrackerService.class.getSimpleName();
     private static final int ONGOING_NOTIFICATION_ID = 10;
 
@@ -87,6 +87,12 @@ public class TrackerService extends Service implements SensorEventListener {
 
     private SharedPreferences.OnSharedPreferenceChangeListener mPreferenceListener;
 
+    @Override
+    public void onAlarm() {
+        //Start tracking
+        play();
+    }
+
 
     //Public interface to bind to this service
     public class LocalBinder extends Binder {
@@ -121,6 +127,8 @@ public class TrackerService extends Service implements SensorEventListener {
             public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
                 if(key.equals("smartalarm_time")){
                     configureAlarm();
+                }else if(key.equals("autostart_time") || key.equals("autostart_use")){
+                    configureAutostart();
                 }
             }
         };
@@ -525,6 +533,29 @@ public class TrackerService extends Service implements SensorEventListener {
         }
     }
 
+    public void configureAutostart(){
+        if(mPreferences.getBoolean("autostart_use", false)){
+            //Set up alarm for tracking
+
+            long startTime = TimePreference.parseTime(
+                    mPreferences.getInt("autostart_time", 1900),
+                    true
+            ).getTime().getTime();
+
+            AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+            alarmManager.set(
+                    AlarmManager.RTC_WAKEUP,
+                    startTime,
+                    "SmartAlarm",
+                    this,
+                    null
+            );
+        }else{
+            //Clear alarm for tracking
+            AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+            alarmManager.cancel(this);
+        }
+    }
     public void triggerIFTTT(final String type){
         //Get maker key
         final String ifttt_key = mPreferences.getString("ifttt_key", "");

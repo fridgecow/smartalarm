@@ -35,6 +35,11 @@
     <string name="smartalarm_settings_snooze">Snooze (mins)</string>
     <string name="title_activity_alarm">AlarmActivity</string>
 
+    <string name="autostart_title">Auto Start?</string>
+    <string name="autostart_summary_on">On</string>
+    <string name="autostart_summary_off">Off</string>
+    <string name="autostart_time">Start Time</string>
+
     <!-- Alarm Activity -->
     <string name="alarm_title">Smart Alarm!</string>
     <string name="alarm_done">✓</string>

@@ -65,6 +65,24 @@
 
     <PreferenceScreen
         android:title="Tracking">
+        <PreferenceScreen
+            android:title="Auto Start">
+            <SwitchPreference
+                android:key="autostart_use"
+                android:title="@string/autostart_title"
+                android:summaryOn="@string/autostart_summary_on"
+                android:summaryOff="@string/autostart_summary_off"
+                app:wear_iconOn="@drawable/ic_check_white"
+                app:wear_iconOff="@drawable/ic_cross_white"
+                android:defaultValue="false"
+                />
+
+            <TimePreference
+                android:key="autostart_time"
+                android:title="@string/autostart_time"
+                android:defaultValue="1900" />
+        </PreferenceScreen>
+
         <ListPreference
             android:key="acc_polling_rate"
             android:title="@string/acc_polling_rate_title"
@@ -86,24 +104,27 @@
             android:entryValues="@array/polling_rates_values"
             android:defaultValue="3" />
 
-        <SwitchPreference
-            android:key="hrm_use"
-            android:title="@string/hrm_settings_title"
-            android:summaryOn="@string/hrm_summary_on"
-            android:summaryOff="@string/hrm_summary_off"
-            app:wear_iconOn="@drawable/ic_check_white"
-            app:wear_iconOff="@drawable/ic_cross_white"
-            android:defaultValue="true"
-            />
+        <PreferenceScreen
+            android:title="Heart Rate Monitor">
 
-        <ListPreference
-            android:key="hrm_polling_rate"
-            android:title="@string/hrm_polling_rate_title"
-            android:entries="@array/polling_rates"
-            android:entryValues="@array/polling_rates_values"
-            android:defaultValue="3"
-            android:dependency="hrm_use"/>
+            <SwitchPreference
+                android:key="hrm_use"
+                android:title="@string/hrm_settings_title"
+                android:summaryOn="@string/hrm_summary_on"
+                android:summaryOff="@string/hrm_summary_off"
+                app:wear_iconOn="@drawable/ic_check_white"
+                app:wear_iconOff="@drawable/ic_cross_white"
+                android:defaultValue="true"
+                />
+
+            <ListPreference
+                android:key="hrm_polling_rate"
+                android:title="@string/hrm_polling_rate_title"
+                android:entries="@array/polling_rates"
+                android:entryValues="@array/polling_rates_values"
+                android:defaultValue="3"
+                android:dependency="hrm_use"/>
+
+        </PreferenceScreen>
     </PreferenceScreen>
-
-
 </PreferenceScreen>
