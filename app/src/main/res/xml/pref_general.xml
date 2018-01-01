@@ -4,97 +4,106 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     >
 
-    <SwitchPreference
-        android:key="smartalarm_use"
-        android:title="@string/smartalarm_settings_title"
-        android:summaryOn="@string/smartalarm_summary_on"
-        android:summaryOff="@string/smartalarm_summary_off"
-        app:wear_iconOn="@drawable/ic_check_white"
-        app:wear_iconOff="@drawable/ic_cross_white"
-        android:defaultValue="true" />
+    <PreferenceScreen
+        android:title='Smart Alarm'>
+        <SwitchPreference
+            android:key="smartalarm_use"
+            android:title="@string/smartalarm_settings_title"
+            android:summaryOn="@string/smartalarm_summary_on"
+            android:summaryOff="@string/smartalarm_summary_off"
+            app:wear_iconOn="@drawable/ic_check_white"
+            app:wear_iconOff="@drawable/ic_cross_white"
+            android:defaultValue="true" />
 
-    <TimePreference
-        android:key="smartalarm_time"
-        android:title="Alarm Latest"
-        android:defaultValue="700"
-        />
+        <TimePreference
+            android:key="smartalarm_time"
+            android:title="Alarm Latest"
+            android:defaultValue="700"
+            />
 
-    <NumberPreference
-        android:key="smartalarm_window"
-        android:title="@string/smartalarm_settings_window"
-        android:min="0"
-        android:max="59"
-        android:defaultValue="30"
-        />
+        <NumberPreference
+            android:key="smartalarm_window"
+            android:title="@string/smartalarm_settings_window"
+            android:min="0"
+            android:max="59"
+            android:defaultValue="30"
+            />
 
-    <NumberPreference
-        android:key="smartalarm_snooze"
-        android:title="@string/smartalarm_settings_snooze"
-        android:min="0"
-        android:max="59"
-        android:defaultValue="5"
-        />
+        <NumberPreference
+            android:key="smartalarm_snooze"
+            android:title="@string/smartalarm_settings_snooze"
+            android:min="0"
+            android:max="59"
+            android:defaultValue="5"
+            />
+    </PreferenceScreen>
 
-    <TextPreference
-        android:key="email"
-        android:title="Export Email"
-        android:defaultValue=""
-        />
+    <PreferenceScreen
+        android:title="Export &amp; IFTTT">
+        <TextPreference
+            android:key="email"
+            android:title="Export Email"
+            android:defaultValue=""
+            />
 
-    <SwitchPreference
-        android:key="auto_export"
-        android:title="@string/auto_export_title"
-        android:summaryOn="@string/auto_export_summary_on"
-        android:summaryOff="@string/auto_export_summary_off"
-        app:wear_iconOn="@drawable/ic_check_white"
-        app:wear_iconOff="@drawable/ic_cross_white"
-        android:defaultValue="true"
-        />
+        <SwitchPreference
+            android:key="auto_export"
+            android:title="@string/auto_export_title"
+            android:summaryOn="@string/auto_export_summary_on"
+            android:summaryOff="@string/auto_export_summary_off"
+            app:wear_iconOn="@drawable/ic_check_white"
+            app:wear_iconOff="@drawable/ic_cross_white"
+            android:defaultValue="true"
+            />
 
-    <TextPreference
-        android:key="ifttt_key"
-        android:title="IFTTT Maker Key"
-        android:defaultValue=""
-        />
+        <TextPreference
+            android:key="ifttt_key"
+            android:title="IFTTT Maker Key"
+            android:defaultValue=""
+            />
+    </PreferenceScreen>
 
-    <ListPreference
-        android:key="acc_polling_rate"
-        android:title="@string/acc_polling_rate_title"
-        android:entries="@array/polling_rates"
-        android:entryValues="@array/polling_rates_values"
-        android:defaultValue="3" />
+    <PreferenceScreen
+        android:title="Tracking">
+        <ListPreference
+            android:key="acc_polling_rate"
+            android:title="@string/acc_polling_rate_title"
+            android:entries="@array/polling_rates"
+            android:entryValues="@array/polling_rates_values"
+            android:defaultValue="3" />
 
-    <NumberPreference
-        android:key="datapoint_rate"
-        android:title="@string/datapoint_rate_title"
-        android:min="1"
-        android:max="60"
-        android:defaultValue="1" />
+        <NumberPreference
+            android:key="datapoint_rate"
+            android:title="@string/datapoint_rate_title"
+            android:min="1"
+            android:max="60"
+            android:defaultValue="1" />
 
-    <ListPreference
-        android:key="acc_polling_rate"
-        android:title="@string/acc_polling_rate_title"
-        android:entries="@array/polling_rates"
-        android:entryValues="@array/polling_rates_values"
-        android:defaultValue="3" />
+        <ListPreference
+            android:key="acc_polling_rate"
+            android:title="@string/acc_polling_rate_title"
+            android:entries="@array/polling_rates"
+            android:entryValues="@array/polling_rates_values"
+            android:defaultValue="3" />
 
-    <SwitchPreference
-        android:key="hrm_use"
-        android:title="@string/hrm_settings_title"
-        android:summaryOn="@string/hrm_summary_on"
-        android:summaryOff="@string/hrm_summary_off"
-        app:wear_iconOn="@drawable/ic_check_white"
-        app:wear_iconOff="@drawable/ic_cross_white"
-        android:defaultValue="true"
-        />
+        <SwitchPreference
+            android:key="hrm_use"
+            android:title="@string/hrm_settings_title"
+            android:summaryOn="@string/hrm_summary_on"
+            android:summaryOff="@string/hrm_summary_off"
+            app:wear_iconOn="@drawable/ic_check_white"
+            app:wear_iconOff="@drawable/ic_cross_white"
+            android:defaultValue="true"
+            />
 
-    <ListPreference
-        android:key="hrm_polling_rate"
-        android:title="@string/hrm_polling_rate_title"
-        android:entries="@array/polling_rates"
-        android:entryValues="@array/polling_rates_values"
-        android:defaultValue="3"
-        android:dependency="hrm_use"/>
+        <ListPreference
+            android:key="hrm_polling_rate"
+            android:title="@string/hrm_polling_rate_title"
+            android:entries="@array/polling_rates"
+            android:entryValues="@array/polling_rates_values"
+            android:defaultValue="3"
+            android:dependency="hrm_use"/>
+    </PreferenceScreen>
 
 
 </PreferenceScreen>
