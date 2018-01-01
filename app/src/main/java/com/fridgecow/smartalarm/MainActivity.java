@@ -180,6 +180,11 @@ public class MainActivity extends WearableActivity {
 
         if(mBound || mBinding) {
             try {
+                //Stop the service if it's not doing anything
+                if(!mService.isRunning()) {
+                    stopService(new Intent(this, TrackerService.class));
+                }
+
                 unbindService(mConnection);
             } catch (IllegalArgumentException e) {
                 Log.d(TAG, "Service not bound");
