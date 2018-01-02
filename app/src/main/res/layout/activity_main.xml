@@ -73,7 +73,7 @@
                         android:contentDescription="Settings"
                         android:elevation="0dp"
                         android:scaleType="fitCenter"
-                        android:src="@android:drawable/ic_menu_preferences"
+                        android:src="@drawable/ic_settings"
                         android:text="@string/button_settings" />
                 </LinearLayout>
 

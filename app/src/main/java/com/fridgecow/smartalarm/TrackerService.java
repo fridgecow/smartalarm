@@ -54,10 +54,15 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     private static final String TAG = TrackerService.class.getSimpleName();
     private static final int ONGOING_NOTIFICATION_ID = 10;
 
+    private Context mContext = this;
+
     private static final String TRIGGER_AWAKE = "awake";
     private static final String TRIGGER_ASLEEP = "asleep";
     private static final String TRIGGER_ALARM = "alarm";
     private static final String TRIGGER_TRACKINGSTART = "tracking";
+
+    private static final int API_EMAILEXPORT = 0;
+    private static final int API_EMAILCONFIRM = 1;
 
     //Things that need to be in configuration
     private static final String OFFLINE_ACC = "sleepdata.csv";
@@ -129,6 +134,8 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                     configureAlarm();
                 }else if(key.equals("autostart_time") || key.equals("autostart_use")){
                     configureAutostart();
+                }else if(key.equals("email")){
+                    confirmEmail();
                 }
             }
         };
@@ -340,52 +347,31 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     }
 
     public void exportData() {
-        String url = "https://www.fridgecow.com/smartalarm/index.php";
-
         //Get email address
         final String email = mPreferences.getString("email", "");
-        if(email.equals("")){
+        if(email.equals("")) {
             Toast.makeText(this, "Please input an email address", Toast.LENGTH_SHORT).show();
         }else {
-            StringRequest postRequest = new StringRequest(Request.Method.POST, url,
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            // response
-                            Log.d(TAG, "Success: "+response);
-                        }
-                    },
-                    new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            // error
-                            Log.d(TAG, "Error exporting! "+error.getMessage());
-                        }
-                    }
-            ) {
-                @Override
-                protected Map<String, String> getParams() {
-                    Map<String, String> params = new HashMap<String, String>();
+            Map<String, String> params = new HashMap<>();
 
-                    params.put("email", email);
+            params.put("email", email);
 
-                    //Loop through datapoints to get CSV data
-                    StringBuilder csv = new StringBuilder("Unix Time,Motion,Heart Rate\n");
-                    for (int i = 0; i < mSleepMotion.size(); i++) {
-                        DataPoint d = mSleepMotion.get(i);
-                        if (mPreferences.getBoolean("hrm_use", true) && i < mSleepHR.size()) {
-                            DataPoint h = mSleepHR.get(i);
-                            csv.append(d.getX() + "," + d.getY() + "," + h.getY() + "\n");
-                        } else {
-                            csv.append(d.getX() + "," + d.getY() + "\n");
-                        }
-                    }
-
-                    params.put("csv", csv.toString());
-                    return params;
+            //Loop through datapoints to get CSV data
+            StringBuilder csv = new StringBuilder("Unix Time,Motion,Heart Rate\n");
+            for (int i = 0; i < mSleepMotion.size(); i++) {
+                DataPoint d = mSleepMotion.get(i);
+                if (mPreferences.getBoolean("hrm_use", true) && i < mSleepHR.size()) {
+                    DataPoint h = mSleepHR.get(i);
+                    csv.append(d.getX()).append(",").append(d.getY())
+                               .append(",").append(h.getY()).append("\n");
+                } else {
+                    csv.append(d.getX()).append(",").append(d.getY()).append("\n");
                 }
-            };
-            mQueue.add(postRequest);
+            }
+
+            params.put("csv", csv.toString());
+
+            apiCall(API_EMAILEXPORT, params);
         }
     }
 
@@ -399,7 +385,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             //Stop minute-by-minute tracking
             Intent intent = new Intent(this, TrackerService.class);
             PendingIntent pendingIntent = PendingIntent.getService(this,  0, intent, PendingIntent.FLAG_NO_CREATE);
-            if(pendingIntent != null) {
+            if(pendingIntent != null){
                 AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
                 alarmManager.cancel(pendingIntent);
             }
@@ -556,6 +542,44 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             alarmManager.cancel(this);
         }
     }
+
+    private void confirmEmail(){
+        final String email = mPreferences.getString("email", "");
+        if(!email.equals("")){
+            Map<String, String> params = new HashMap<>();
+            params.put("email", email);
+            params.put("add", "");
+
+            apiCall(API_EMAILCONFIRM, params);
+        }
+    }
+
+    private void apiCall(int type, final Map<String, String> params){
+        String url = "https://www.fridgecow.com/smartalarm/email.php";
+
+        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Toast.makeText(mContext, response, Toast.LENGTH_SHORT).show();
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(mContext, "Error! "+error.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                }
+        ){
+            @Override
+            protected Map<String, String> getParams() {
+                return params;
+            }
+        };
+
+        mQueue.add(postRequest);
+    }
+
     public void triggerIFTTT(final String type){
         //Get maker key
         final String ifttt_key = mPreferences.getString("ifttt_key", "");

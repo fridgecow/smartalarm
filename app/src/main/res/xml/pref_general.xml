@@ -5,20 +5,23 @@
     >
 
     <PreferenceScreen
-        android:title='Smart Alarm'>
+        android:title='Smart Alarm'
+        android:icon='@mipmap/ic_launcher_foreground'>
+
         <SwitchPreference
             android:key="smartalarm_use"
             android:title="@string/smartalarm_settings_title"
             android:summaryOn="@string/smartalarm_summary_on"
             android:summaryOff="@string/smartalarm_summary_off"
-            app:wear_iconOn="@drawable/ic_check_white"
-            app:wear_iconOff="@drawable/ic_cross_white"
+            app:wear_iconOn="@drawable/ic_bell"
+            app:wear_iconOff="@drawable/ic_bell_off"
             android:defaultValue="true" />
 
         <TimePreference
             android:key="smartalarm_time"
             android:title="Alarm Latest"
             android:defaultValue="700"
+            android:icon="@drawable/ic_clock"
             />
 
         <NumberPreference
@@ -35,15 +38,18 @@
             android:min="0"
             android:max="59"
             android:defaultValue="5"
+            android:icon="@drawable/ic_snooze"
             />
     </PreferenceScreen>
 
     <PreferenceScreen
-        android:title="Export &amp; IFTTT">
+        android:title="Export &amp; IFTTT"
+        android:icon="@drawable/ic_link">
         <TextPreference
             android:key="email"
             android:title="Export Email"
             android:defaultValue=""
+            android:icon="@drawable/ic_mail"
             />
 
         <SwitchPreference
@@ -60,11 +66,13 @@
             android:key="ifttt_key"
             android:title="IFTTT Maker Key"
             android:defaultValue=""
+            android:icon="@drawable/ic_ifttt"
             />
     </PreferenceScreen>
 
     <PreferenceScreen
-        android:title="Tracking">
+        android:title="Tracking"
+        android:icon="@drawable/ic_settings">
         <PreferenceScreen
             android:title="Auto Start">
             <SwitchPreference
@@ -80,7 +88,8 @@
             <TimePreference
                 android:key="autostart_time"
                 android:title="@string/autostart_time"
-                android:defaultValue="1900" />
+                android:defaultValue="1900"
+                android:icon="@drawable/ic_clock"/>
         </PreferenceScreen>
 
         <ListPreference
@@ -97,23 +106,17 @@
             android:max="60"
             android:defaultValue="1" />
 
-        <ListPreference
-            android:key="acc_polling_rate"
-            android:title="@string/acc_polling_rate_title"
-            android:entries="@array/polling_rates"
-            android:entryValues="@array/polling_rates_values"
-            android:defaultValue="3" />
-
         <PreferenceScreen
-            android:title="Heart Rate Monitor">
+            android:title="Heart Rate Monitor"
+            android:icon="@drawable/ic_heart">
 
             <SwitchPreference
                 android:key="hrm_use"
                 android:title="@string/hrm_settings_title"
                 android:summaryOn="@string/hrm_summary_on"
                 android:summaryOff="@string/hrm_summary_off"
-                app:wear_iconOn="@drawable/ic_check_white"
-                app:wear_iconOff="@drawable/ic_cross_white"
+                app:wear_iconOn="@drawable/ic_heart"
+                app:wear_iconOff="@drawable/ic_heart_off"
                 android:defaultValue="true"
                 />
 
