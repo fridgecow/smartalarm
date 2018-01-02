@@ -1,12 +1,15 @@
 package com.fridgecow.smartalarm;
 
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
@@ -23,6 +26,9 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.fitness.FitnessOptions;
+import com.google.android.gms.fitness.data.DataType;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
@@ -46,9 +52,15 @@ public class MainActivity extends WearableActivity {
     private LineGraphSeries<DataPoint> mAccelData;
     private LineGraphSeries<DataPoint> mHRData;
 
+    private static final int GOOGLE_FIT_PERMISSIONS_REQUEST_CODE = 10;
+
     private TrackerService mService;
     private boolean mBound;
     private boolean mBinding = false;
+
+    private SharedPreferences mPreferences;
+
+    private boolean mUseFit = false;
 
     /* Defines callbacks for service binding, passed to bindService() */
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -172,6 +184,36 @@ public class MainActivity extends WearableActivity {
 
         mGraphView.getSecondScale().setMinY(0);
         mGraphView.getSecondScale().setMaxY(100);
+
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        //Register for Google Fit if necessary
+        if(!mPreferences.getBoolean("googlefit_use", false)) {
+            FitnessOptions options = FitnessOptions.builder()
+                    .addDataType(DataType.AGGREGATE_HEART_RATE_SUMMARY, FitnessOptions.ACCESS_WRITE)
+                    .addDataType(DataType.TYPE_ACTIVITY_SAMPLES, FitnessOptions.ACCESS_WRITE)
+                    .build();
+
+            if (!GoogleSignIn.hasPermissions(GoogleSignIn.getLastSignedInAccount(this), options)) {
+                GoogleSignIn.requestPermissions(
+                        this, // your activity
+                        GOOGLE_FIT_PERMISSIONS_REQUEST_CODE,
+                        GoogleSignIn.getLastSignedInAccount(this),
+                        options);
+            } else {
+                //accessGoogleFit();
+                mUseFit = true;
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == Activity.RESULT_OK) {
+            if (requestCode == GOOGLE_FIT_PERMISSIONS_REQUEST_CODE) {
+                //accessGoogleFit();
+                mUseFit = true;
+            }
+        }
     }
 
     @Override

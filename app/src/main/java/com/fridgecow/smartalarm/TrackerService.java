@@ -15,6 +15,7 @@ import android.hardware.SensorManager;
 import android.os.Binder;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -26,6 +27,16 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.fitness.Fitness;
+import com.google.android.gms.fitness.FitnessOptions;
+import com.google.android.gms.fitness.data.DataSet;
+import com.google.android.gms.fitness.data.DataSource;
+import com.google.android.gms.fitness.data.DataType;
+import com.google.android.gms.fitness.data.Field;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.Task;
 import com.jjoe64.graphview.series.DataPoint;
 
 import java.io.BufferedReader;
@@ -43,6 +54,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import preference.TimePreference;
 
@@ -116,14 +128,18 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mQueue = Volley.newRequestQueue(this);
 
-        //Fill SleepMotion
-        try {
-            readData(OFFLINE_ACC, mSleepMotion);
-            readData(OFFLINE_HRM, mSleepHR);
-        }catch(FileNotFoundException e){
-            Log.d(TAG, "No offline store found - starting from scratch");
-        }catch(IOException e){
-            Log.d(TAG, "Problem reading offline store");
+        if(mPreferences.getBoolean("googlefit_use", false)){
+
+        }else{
+            //Fill SleepMotion
+            try {
+                readData(OFFLINE_ACC, mSleepMotion);
+                readData(OFFLINE_HRM, mSleepHR);
+            } catch (FileNotFoundException e) {
+                Log.d(TAG, "No offline store found - starting from scratch");
+            } catch (IOException e) {
+                Log.d(TAG, "Problem reading offline store");
+            }
         }
 
         //Allow preferences to be changed on-the-fly
@@ -484,6 +500,48 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         //Auto export?
         if(mPreferences.getBoolean("auto_export", true)){
             exportData();
+        }
+
+        //Google Fit?
+        if(mPreferences.getBoolean("googlefit_use", false)){
+
+            //Insert heart rate data if it exists
+            if(mSleepHR.size() > 0) {
+                DataSource source = new DataSource.Builder()
+                        .setAppPackageName(this)
+                        .setDataType(DataType.TYPE_HEART_RATE_BPM)
+                        .setStreamName(TAG + " - heart rate")
+                        .setType(DataSource.TYPE_RAW)
+                        .build();
+
+                DataSet data = DataSet.create(source);
+
+                for(int i = 1; i < mSleepHR.size(); i++){
+                    DataPoint last = mSleepHR.get(i - 1);
+                    DataPoint current = mSleepHR.get(i);
+
+                    com.google.android.gms.fitness.data.DataPoint d = data.createDataPoint()
+                            .setTimeInterval((long) last.getX() + 1, (long) current.getX(), TimeUnit.MILLISECONDS);
+                    d.getValue(Field.FIELD_BPM).setInt((int) current.getY());
+
+                    data.add(d);
+                }
+
+                Task response = Fitness.getHistoryClient(this, GoogleSignIn.getLastSignedInAccount(this))
+                        .insertData(data).addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                Log.d(TAG, "HR data added to google fit");
+                            }
+                        }).addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.d(TAG, "Error: "+e.getMessage());
+                            }
+                        });
+            }
+
+            //Insert sleep cycle sessions
         }
 
         //Stop service (from user perspective)
