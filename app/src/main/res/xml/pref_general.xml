@@ -127,7 +127,15 @@
                 android:entryValues="@array/polling_rates_values"
                 android:defaultValue="3"
                 android:dependency="hrm_use"/>
-
         </PreferenceScreen>
     </PreferenceScreen>
+
+    <SwitchPreference
+        android:key="googlefit_use"
+        android:title="@string/googlefit_settings_title"
+        android:summaryOn="@string/googlefit_summary_on"
+        android:summaryOff="@string/googlefit_summary_off"
+        app:wear_iconOn="@drawable/ic_check_white"
+        app:wear_iconOff="@drawable/ic_cross_white"
+        android:defaultValue="false" />
 </PreferenceScreen>

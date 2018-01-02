@@ -52,4 +52,7 @@
     <string name="graph_no_data">No data yet - go to sleep!</string>
     <string name="title_activity_time_input">Time Input</string>
     <string name="alarm_snooze">Snooze</string>
+    <string name="googlefit_settings_title">Google Fit</string>
+    <string name="googlefit_summary_on">Use</string>
+    <string name="googlefit_summary_off">Don\'t use</string>
 </resources>
