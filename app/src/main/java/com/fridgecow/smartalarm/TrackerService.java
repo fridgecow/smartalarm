@@ -57,6 +57,7 @@ import preference.TimePreference;
 public class TrackerService extends Service implements SensorEventListener, AlarmManager.OnAlarmListener {
     private static final String TAG = TrackerService.class.getSimpleName();
     private static final int ONGOING_NOTIFICATION_ID = 10;
+    private static final int NOTIFICATION_INTENT = 10;
     private static final int PERMISSION_REQUEST_SENSOR = 1;
 
     private Context mContext = this;
@@ -230,6 +231,8 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 reset();
             }else if(task.equals("export")){
                 exportData();
+            }else if(task.equals("playpause")){
+                playPause();
             }
         }
 
@@ -398,10 +401,25 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             //Set notification
             Intent appIntent = new Intent(this, MainActivity.class);
             PendingIntent appPending = PendingIntent.getActivity(this,  0, appIntent, 0);
+
+            Intent playPauseIntent = new Intent(this, TrackerService.class);
+            playPauseIntent.putExtra("task", "playpause");
+            PendingIntent ppPending =
+                    PendingIntent.getService(this, NOTIFICATION_INTENT, playPauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            NotificationCompat.Action.WearableExtender actionExtender = new NotificationCompat.Action.WearableExtender()
+                    .setHintDisplayActionInline(true);
+
+            NotificationCompat.Action ppAction = new NotificationCompat.Action.Builder(
+                    android.R.drawable.ic_media_play,
+                    "Play",
+                    ppPending).extend(actionExtender).build();
+
             mNotification = new NotificationCompat.Builder(this, "sleeptracking")
                     .setContentTitle("Sleep Tracking Paused")
                     .setSmallIcon(R.mipmap.ic_launcher_foreground) //(icon is required)
-                    .setContentIntent(appPending);
+                    .setContentIntent(appPending)
+                    .addAction(ppAction);
 
             mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Get back to bed!").build());
 
@@ -454,12 +472,28 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             PendingIntent pendingIntent =
                     PendingIntent.getActivity(this, 0, launchAppIntent, 0);
 
+            Intent playPauseIntent = new Intent(this, TrackerService.class);
+            playPauseIntent.putExtra("task", "playpause");
+            PendingIntent ppPending =
+                    PendingIntent.getService(this, NOTIFICATION_INTENT, playPauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            NotificationCompat.Action.WearableExtender actionExtender = new NotificationCompat.Action.WearableExtender()
+                    .setHintDisplayActionInline(true);
+
+            NotificationCompat.Action ppAction = new NotificationCompat.Action.Builder(
+                    android.R.drawable.ic_media_pause,
+                    "Pause",
+                    ppPending).extend(actionExtender).build();
+
+
             //Set foreground notification
             mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             mNotification = new NotificationCompat.Builder(this, "sleeptracking")
                     .setContentTitle("Sleep Tracking Enabled")
                     .setSmallIcon(R.mipmap.ic_launcher_foreground) //(icon is required)
-                    .setContentIntent(pendingIntent);
+                    .setContentIntent(pendingIntent)
+                    .addAction(ppAction);
+
             Notification notification = mNotification.setContentText("You're not sleeping").build();
             startForeground(ONGOING_NOTIFICATION_ID, notification);
 
