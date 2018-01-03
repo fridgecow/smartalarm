@@ -1,5 +1,6 @@
 package com.fridgecow.smartalarm;
 
+import android.Manifest;
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -8,6 +9,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -16,7 +18,9 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -53,6 +57,7 @@ import preference.TimePreference;
 public class TrackerService extends Service implements SensorEventListener, AlarmManager.OnAlarmListener {
     private static final String TAG = TrackerService.class.getSimpleName();
     private static final int ONGOING_NOTIFICATION_ID = 10;
+    private static final int PERMISSION_REQUEST_SENSOR = 1;
 
     private Context mContext = this;
 
@@ -426,12 +431,19 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
             if(mPreferences.getBoolean("hrm_use", true)) {
                 Log.d(TAG, "Using HRM");
-                int hrmPoll = Integer.parseInt(mPreferences.getString("acc_polling_rate", "3"));
-                mSensorManager.registerListener(
-                        this,
-                        hr,
-                        hrmPoll
-                );
+
+                //Check permissions
+                int permissionCheck = ContextCompat.checkSelfPermission(this,
+                        Manifest.permission.BODY_SENSORS);
+
+                if(permissionCheck != PackageManager.PERMISSION_GRANTED){
+                    int hrmPoll = Integer.parseInt(mPreferences.getString("acc_polling_rate", "3"));
+                    mSensorManager.registerListener(
+                            this,
+                            hr,
+                            hrmPoll
+                    );
+                }
             }
 
             //Configure Smart Alarm

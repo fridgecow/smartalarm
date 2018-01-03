@@ -1,13 +1,20 @@
 package com.fridgecow.smartalarm;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
 import android.view.View;
@@ -33,6 +40,7 @@ import java.util.Map;
 
 public class MainActivity extends WearableActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
+    private static final int PERMISSION_REQUEST_SENSOR = 1;
 
     private TextView mTextView;
     private ImageButton mStopButton;
@@ -49,6 +57,8 @@ public class MainActivity extends WearableActivity {
     private TrackerService mService;
     private boolean mBound;
     private boolean mBinding = false;
+
+    private SharedPreferences mPreferences;
 
     /* Defines callbacks for service binding, passed to bindService() */
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -89,6 +99,8 @@ public class MainActivity extends WearableActivity {
         mSettingsButton = findViewById(R.id.button_settings);
         mGraphNoData = findViewById(R.id.nodata);
 
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
         //Start tracking service and bind to it
         Intent service = new Intent(this, TrackerService.class);
         startService(service);
@@ -118,6 +130,17 @@ public class MainActivity extends WearableActivity {
             @Override
             public void onClick(View view) {
                 if(mBound){
+                    //Check for required permissions
+                    if(mPreferences.getBoolean("hrm_use", true)) {
+                        int permissionCheck = ContextCompat.checkSelfPermission(view.getContext(),
+                                Manifest.permission.BODY_SENSORS);
+                        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+                            ActivityCompat.requestPermissions(getActivity(),
+                                    new String[]{Manifest.permission.BODY_SENSORS},
+                                    PERMISSION_REQUEST_SENSOR);
+                        }
+                    }
+
                     mService.playPause();
                     updateViews();
                 }
@@ -175,6 +198,19 @@ public class MainActivity extends WearableActivity {
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSION_REQUEST_SENSOR: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //Do nothing, for now
+                }
+                return;
+            }
+        }
+    }
+
+    @Override
     public void onDestroy(){
         super.onDestroy();
 
@@ -228,5 +264,9 @@ public class MainActivity extends WearableActivity {
                 mResetButton.setImageResource(R.drawable.ic_cc_clear);
             }
         }
+    }
+
+    private Activity getActivity(){
+        return this;
     }
 }
