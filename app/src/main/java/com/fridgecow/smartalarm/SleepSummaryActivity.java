@@ -9,11 +9,13 @@ import android.support.wear.widget.WearableLinearLayoutManager;
 import android.support.wear.widget.WearableRecyclerView;
 import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.widget.TextView;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class SleepSummaryActivity extends WearableActivity {
@@ -38,8 +40,7 @@ public class SleepSummaryActivity extends WearableActivity {
         mSleepFiles = new ArrayList<>();
 
         //Get all sleep summaries
-        List<String> files = Arrays.asList(fileList());
-        for(String file : files){
+        for(String file : fileList()){
             if(file.startsWith(TrackerService.SUMMARY_PREFIX) ){
                 Log.d(TAG, file);
                 mSleepFiles.add(file);
@@ -51,7 +52,7 @@ public class SleepSummaryActivity extends WearableActivity {
                 new WearableLinearLayoutManager(this, new CurvingLayoutCallback(this)));
         mWearableRecyclerView.setItemAnimator(new DefaultItemAnimator());
         mWearableRecyclerView.setAdapter(mAdapter);
-
+        
         // Enables Always-on
         //setAmbientEnabled();
     }

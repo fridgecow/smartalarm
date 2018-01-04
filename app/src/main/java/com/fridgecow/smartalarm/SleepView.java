@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.text.TextPaint;
+import android.util.Log;
 import android.view.View;
 
 import com.jjoe64.graphview.series.DataPoint;
@@ -60,7 +61,7 @@ public class SleepView extends View {
                 contentHeight = height - top - getPaddingBottom();
 
         //Draw Test Text
-        canvas.drawText("Test", left, top, mTextPaint);
+        //canvas.drawText("Test", left, top, mTextPaint);
 
         if(mSleepData != null){
             //Draw background
@@ -68,11 +69,13 @@ public class SleepView extends View {
             canvas.drawRect(left, top, contentWidth, contentHeight, mBackgroundPaint);
 
             //Draw Regions
-            float sleepLength = (float) (mSleepData.getEnd() - mSleepData.getStart());
+            final float start = (float) mSleepData.getStart(), end = (float) mSleepData.getEnd();
+            final float sleepLength = end - start;
             for(DataRegion d : mSleepData){
                 if(d.getLabel().equals(SleepData.WAKEREGION)){
-                    final float regionLeft = left + ((float) d.getStart()*contentWidth)/sleepLength;
-                    final float regionRight = left + ((float) d.getEnd()*contentWidth)/sleepLength - regionLeft;
+                    final float regionLeft = left + ((float) (d.getStart() - start)*contentWidth)/sleepLength;
+                    final float regionRight = left + ((float) (d.getEnd() - start)*contentWidth)/sleepLength;
+                    Log.d("SleepView", "Region "+regionLeft+"-"+regionRight);
                     canvas.drawRect(regionLeft, top, regionRight, contentHeight, mForegroundPaint);
                 }
             }

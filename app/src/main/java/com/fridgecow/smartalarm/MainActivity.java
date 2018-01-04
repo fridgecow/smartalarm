@@ -127,6 +127,13 @@ public class MainActivity extends WearableActivity {
             }
         });
 
+        //Only show summary button if there are summaries
+        if(fileList().length > 2){ //There are 2 offline stores
+            mSummaryButton.setVisibility(View.VISIBLE);
+        }else{
+            mSummaryButton.setVisibility(View.GONE);
+        }
+
         //TODO: Set these up after bound, and eliminate mBound checks.
         mExportButton.setOnClickListener(new View.OnClickListener() {
             @Override

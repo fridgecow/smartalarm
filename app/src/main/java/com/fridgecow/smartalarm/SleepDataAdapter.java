@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.List;
@@ -27,12 +28,18 @@ public class SleepDataAdapter extends WearableRecyclerView.Adapter<SleepDataAdap
             super(view);
             mView = view;
             mContext = c;
+
+            view.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.d("SleepDataAdapter", "Item tapped");
+                }
+            });
         }
 
         public void attachSleepData(SleepData sleepdata){
             mData = sleepdata;
             mView.attachSleepData(sleepdata);
-
         }
 
         public void attachSleepData(String filename){
@@ -56,7 +63,7 @@ public class SleepDataAdapter extends WearableRecyclerView.Adapter<SleepDataAdap
     @Override
     public SleepViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         SleepView item = new SleepView(parent.getContext());
-        item.setPadding(20, 5, 5, 5);
+        item.setPadding(20, 5, 0, 5);
         return new SleepViewHolder(item, parent.getContext());
     }
 
