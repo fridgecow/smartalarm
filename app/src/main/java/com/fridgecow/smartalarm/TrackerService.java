@@ -14,6 +14,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -73,6 +74,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     //Things that need to be in configuration
     private static final String OFFLINE_ACC = "sleepdata.csv";
     private static final String OFFLINE_HRM = "sleephrm.csv";
+    private static final String SUMMARY_PREFIX = "summary-";
     private static final double AWAKE_THRESH = 150.0; //Found by trial
 
     private SensorManager mSensorManager;
@@ -98,6 +100,72 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     private SharedPreferences.OnSharedPreferenceChangeListener mPreferenceListener;
 
+    private class SleepProcessor extends AsyncTask<List<DataPoint>, Integer, SleepData>{
+
+        //Actigraphy constants - make these configurable!
+        private final double P = 0.001;
+        private final double[] W = {106.0, 54.0, 58.0, 76.0, 230.0, 74.0, 67.0};
+
+        @Override
+        protected SleepData doInBackground(List<DataPoint>[] lists) {
+            //For now, only deal with the first list - accelerometer data
+            List<DataPoint> activity = lists[0];
+
+            //Do actigraphy algorithm
+            //https://github.com/fridgecow/smartalarm/wiki/Sleep-Detection
+
+            SleepData data = new SleepData(activity.get(0).getX(), activity.get(activity.size()).getX());
+            boolean sleeping = false;
+            int lastIndex = 0;
+            for(int i = 4; i < activity.size() - 2; i++){
+                //Do weighted sum into 'D'
+                double D = 0;
+                for(int j = 0; j < W.length; j++){
+                    double a = activity.get(i+j-4).getY();
+                    if(a > 300){
+                        a = 300;
+                    }
+
+                    D += a*W[j];
+                }
+                D *= P;
+
+                if(D < 1) { //Sleep
+                    if(!sleeping){
+                        //End a region
+                        data.add(new DataRegion(activity.get(lastIndex), activity.get(i), "wakeful"));
+                        sleeping = true;
+                    }
+                }else { //Wakefulness
+                    if(sleeping){
+                        //Start a region
+                        lastIndex = i;
+                        sleeping = false;
+                    }
+                }
+
+                publishProgress(100*i / activity.size());
+            }
+
+            return data;
+        }
+
+        @Override
+        protected void onPostExecute(SleepData result){
+            //Store somewhere useful
+            //For now, "useful" is more csv files
+            //Put this in SleepData object?
+            try{
+                final BufferedWriter out = new BufferedWriter(new OutputStreamWriter(openFileOutput(SUMMARY_PREFIX+result.getEnd(), 0)));
+                out.write("tracking,"+result.getStart()+","+result.getEnd()+"\n");
+                for(DataRegion d : result){
+                    out.write(d.getLabel()+","+d.getStart()+","+d.getEnd());
+                }
+            }catch(IOException e){
+                Log.d(TAG, "Unable to open file for output");
+            }
+        }
+    }
     @Override
     public void onAlarm() {
         //Start tracking
