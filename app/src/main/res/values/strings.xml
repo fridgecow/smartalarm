@@ -52,4 +52,5 @@
     <string name="graph_no_data">No data yet - go to sleep!</string>
     <string name="title_activity_time_input">Time Input</string>
     <string name="alarm_snooze">Snooze</string>
+    <string name="title_activity_sleep_summary">SleepSummaryActivity</string>
 </resources>

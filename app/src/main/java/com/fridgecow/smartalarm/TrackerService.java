@@ -158,12 +158,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             //For now, "useful" is more csv files
             //Put this in SleepData object?
             try{
-                final BufferedWriter out = new BufferedWriter(new OutputStreamWriter(openFileOutput(SUMMARY_PREFIX+((int)result.getEnd()), 0)));
-                out.write("tracking,"+result.getStart()+","+result.getEnd()+"\n");
-                for(DataRegion d : result){
-                    out.write(d.getLabel()+","+d.getStart()+","+d.getEnd()+"\n");
-                    Log.d(TAG, d.getLabel()+","+d.getStart()+","+d.getEnd());
-                }
+                result.writeOut(TrackerService.this, SUMMARY_PREFIX+((int)result.getEnd()));
             }catch(IOException e){
                 Log.d(TAG, "Unable to open file for output");
             }

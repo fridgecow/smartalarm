@@ -32,6 +32,7 @@
             android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -52,10 +53,18 @@
         <activity
             android:name=".TextInputActivity"
             android:label="@string/title_activity_text_input" />
-
         <activity
             android:name=".TimeInputActivity"
             android:label="@string/title_activity_time_input" />
+        <activity
+            android:name=".SleepSummaryActivity"
+            android:label="@string/title_activity_sleep_summary">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

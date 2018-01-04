@@ -53,6 +53,7 @@ public class MainActivity extends WearableActivity {
     private TextView mGraphNoData;
     private ImageButton mSettingsButton;
     private ImageButton mResetButton;
+    private Button mSummaryButton;
 
     private LineGraphSeries<DataPoint> mAccelData;
     private LineGraphSeries<DataPoint> mHRData;
@@ -101,6 +102,7 @@ public class MainActivity extends WearableActivity {
         mGraphActions = findViewById(R.id.graph_actions);
         mSettingsButton = findViewById(R.id.button_settings);
         mGraphNoData = findViewById(R.id.nodata);
+        mSummaryButton = findViewById(R.id.view_summaries);
 
         mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -118,6 +120,12 @@ public class MainActivity extends WearableActivity {
             }
         });
 
+        mSummaryButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                view.getContext().startActivity(new Intent(view.getContext(), SleepSummaryActivity.class));
+            }
+        });
 
         //TODO: Set these up after bound, and eliminate mBound checks.
         mExportButton.setOnClickListener(new View.OnClickListener() {
@@ -198,17 +206,6 @@ public class MainActivity extends WearableActivity {
 
         mGraphView.getSecondScale().setMinY(0);
         mGraphView.getSecondScale().setMaxY(100);
-
-        //Get all sleep summaries
-        List<String> files = Arrays.asList(fileList());
-        for(String file : files){
-            if(file.startsWith(TrackerService.SUMMARY_PREFIX)){
-                Log.d(TAG, file);
-
-                //Display it
-            }
-        }
-
     }
 
     @Override
@@ -263,8 +260,6 @@ public class MainActivity extends WearableActivity {
             mGraphActions.setVisibility(View.GONE);
             mGraphNoData.setVisibility(View.VISIBLE);
         }
-
-        getFilesDir();
     }
 
     private void updateViews(){
