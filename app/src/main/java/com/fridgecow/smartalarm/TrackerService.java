@@ -48,6 +48,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import preference.TimePreference;
 
@@ -444,6 +445,9 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             }
 
             params.put("csv", csv.toString());
+
+            //Put TimeZone so that server knows how to interpret UTC
+            params.put("tz", TimeZone.getDefault().getID());
 
             apiCall(API_EMAILEXPORT, params);
         }
