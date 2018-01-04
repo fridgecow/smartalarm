@@ -135,7 +135,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 if(D < 1) { //Sleep
                     if(!sleeping){
                         //End a region
-                        data.add(new DataRegion(activity.get(lastIndex), activity.get(i), "wakeful"));
+                        data.add(new DataRegion(activity.get(lastIndex), activity.get(i), SleepData.WAKEREGION));
                         sleeping = true;
                     }
                 }else { //Wakefulness

@@ -16,6 +16,7 @@ import java.util.List;
  */
 
 public class SleepData extends ArrayList<DataRegion> {
+    public static final String WAKEREGION = "wakeful";
     private static final String TAG = SleepData.class.getSimpleName();
     private double mStart;
     private double mEnd;

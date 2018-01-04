@@ -201,6 +201,7 @@ public class CircularInputView extends ViewGroup {
     protected void onFinishInflate(){
         super.onFinishInflate();
     }
+
     /* stackoverflow.com/questions/12166476/android-canvas-drawtext-set-font-size-from-width */
     private static void setTextSizeForWidth(Paint paint, float desiredWidth, String text) {
         final float testTextSize = 48f;
