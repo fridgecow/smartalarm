@@ -59,4 +59,5 @@
     <string name="detectedwaketime">Detected Wake Time</string>
     <string name="legend_sleep">Deep Sleep</string>
     <string name="legend_wakefulness">Wakefulness</string>
+    <string name="summary_delete">Delete</string>
 </resources>
