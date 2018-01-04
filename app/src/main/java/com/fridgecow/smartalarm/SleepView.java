@@ -86,7 +86,12 @@ public class SleepView extends View {
         int width, height;
 
         width = MeasureSpec.getSize(widthMeasureSpec);
-        height = 100;
+
+        if(getVisibility() != View.GONE){
+            height = 100;
+        }else{
+            height = 0;
+        }
 
         setMeasuredDimension(width, height);
     }
