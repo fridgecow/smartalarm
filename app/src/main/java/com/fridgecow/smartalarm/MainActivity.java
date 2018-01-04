@@ -34,8 +34,11 @@ import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends WearableActivity {
@@ -195,6 +198,17 @@ public class MainActivity extends WearableActivity {
 
         mGraphView.getSecondScale().setMinY(0);
         mGraphView.getSecondScale().setMaxY(100);
+
+        //Get all sleep summaries
+        List<String> files = Arrays.asList(fileList());
+        for(String file : files){
+            if(file.startsWith(TrackerService.SUMMARY_PREFIX)){
+                Log.d(TAG, file);
+
+                //Display it
+            }
+        }
+
     }
 
     @Override
@@ -210,6 +224,11 @@ public class MainActivity extends WearableActivity {
         }
     }
 
+    @Override
+    public void onResume(){
+        super.onResume();
+        updateViews();
+    }
     @Override
     public void onDestroy(){
         super.onDestroy();
@@ -244,6 +263,8 @@ public class MainActivity extends WearableActivity {
             mGraphActions.setVisibility(View.GONE);
             mGraphNoData.setVisibility(View.VISIBLE);
         }
+
+        getFilesDir();
     }
 
     private void updateViews(){

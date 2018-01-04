@@ -74,7 +74,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     //Things that need to be in configuration
     private static final String OFFLINE_ACC = "sleepdata.csv";
     private static final String OFFLINE_HRM = "sleephrm.csv";
-    private static final String SUMMARY_PREFIX = "summary-";
+    public static final String SUMMARY_PREFIX = "summary-";
     private static final double AWAKE_THRESH = 150.0; //Found by trial
 
     private SensorManager mSensorManager;
@@ -114,7 +114,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             //Do actigraphy algorithm
             //https://github.com/fridgecow/smartalarm/wiki/Sleep-Detection
 
-            SleepData data = new SleepData(activity.get(0).getX(), activity.get(activity.size()).getX());
+            SleepData data = new SleepData(activity.get(0).getX(), activity.get(activity.size()-1).getX());
             boolean sleeping = false;
             int lastIndex = 0;
             for(int i = 4; i < activity.size() - 2; i++){
@@ -129,6 +129,8 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                     D += a*W[j];
                 }
                 D *= P;
+
+                Log.d(TAG, "Discriminant: "+D);
 
                 if(D < 1) { //Sleep
                     if(!sleeping){
@@ -156,10 +158,11 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             //For now, "useful" is more csv files
             //Put this in SleepData object?
             try{
-                final BufferedWriter out = new BufferedWriter(new OutputStreamWriter(openFileOutput(SUMMARY_PREFIX+result.getEnd(), 0)));
+                final BufferedWriter out = new BufferedWriter(new OutputStreamWriter(openFileOutput(SUMMARY_PREFIX+((int)result.getEnd()), 0)));
                 out.write("tracking,"+result.getStart()+","+result.getEnd()+"\n");
                 for(DataRegion d : result){
-                    out.write(d.getLabel()+","+d.getStart()+","+d.getEnd());
+                    out.write(d.getLabel()+","+d.getStart()+","+d.getEnd()+"\n");
+                    Log.d(TAG, d.getLabel()+","+d.getStart()+","+d.getEnd());
                 }
             }catch(IOException e){
                 Log.d(TAG, "Unable to open file for output");
@@ -490,6 +493,9 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                     .addAction(ppAction);
 
             mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Get back to bed!").build());
+
+            //Proccess sleep data
+            new SleepProcessor().execute(mSleepMotion);
 
             //Clear foreground
             stopForeground(false);
