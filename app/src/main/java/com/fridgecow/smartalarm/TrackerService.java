@@ -493,9 +493,6 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
             mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Get back to bed!").build());
 
-            //Proccess sleep data
-            new SleepProcessor().execute(mSleepMotion);
-
             //Clear foreground
             stopForeground(false);
         }
@@ -600,9 +597,14 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             pause();
         }
 
-        //Auto export?
-        if(mPreferences.getBoolean("auto_export", true)){
-            exportData();
+        if(mSleepMotion.size() > 0) {
+            //Auto export?
+            if (mPreferences.getBoolean("auto_export", true)) {
+                exportData();
+            }
+
+            //Proccess sleep data
+            new SleepProcessor().execute(mSleepMotion);
         }
 
         //Stop service (from user perspective)

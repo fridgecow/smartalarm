@@ -98,6 +98,12 @@ public class SleepSummaryActivity extends WearableActivity {
         }catch(IOException e){
             throw new IllegalArgumentException("Sleep file invalid");
         }
+
+        if(mData.size() == 0){
+            //Delete the file, and finish(), restoring to good state
+            deleteFile(mFile);
+            finish();
+        }
     }
 
     public static Intent createIntent(Context context, String file){
