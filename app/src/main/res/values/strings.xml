@@ -57,4 +57,6 @@
     <string name="sleepefficiencytotal">Sleep Efficiency (Total Tracked)</string>
     <string name="sleepefficiencysmart"><![CDATA[Sleep Efficiency (Sleep->Wake)]]></string>
     <string name="detectedwaketime">Detected Wake Time</string>
+    <string name="legend_sleep">Deep Sleep</string>
+    <string name="legend_wakefulness">Wakefulness</string>
 </resources>

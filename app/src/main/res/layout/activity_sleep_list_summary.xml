@@ -11,6 +11,8 @@
         android:layout_height="match_parent"
         android:clipChildren="false"
         android:clipToPadding="false"
-        android:scrollbars="vertical" />
+        android:scrollbars="vertical"
+        android:background="@color/dark_grey"
+    />
 
 

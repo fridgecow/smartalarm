@@ -8,6 +8,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +16,7 @@ import java.util.List;
  * Created by tom on 04/01/18.
  */
 
-public class SleepData extends ArrayList<DataRegion> {
+public class SleepData extends ArrayList<DataRegion> implements Serializable{
     public static final String WAKEREGION = "wakeful";
     private static final String TAG = SleepData.class.getSimpleName();
     private double mStart;

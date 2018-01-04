@@ -4,11 +4,13 @@ import android.provider.ContactsContract;
 
 import com.jjoe64.graphview.series.DataPoint;
 
+import java.io.Serializable;
+
 /**
  * Created by tom on 04/01/18.
  */
 
-public class DataRegion{
+public class DataRegion implements Serializable{
     private double mStart;
     private double mEnd;
     private String mLabel;

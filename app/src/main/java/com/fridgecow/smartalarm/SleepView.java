@@ -4,7 +4,9 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.text.TextPaint;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
@@ -40,6 +42,17 @@ public class SleepView extends View {
         init(context);
     }
 
+    public SleepView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+
+        init(context);
+    }
+
+    public SleepView(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+        init(context);
+    }
+
     public void attachSleepData(SleepData data){
         mSleepData = data;
 
@@ -49,7 +62,7 @@ public class SleepView extends View {
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.US);
         timeFormat.setTimeZone(TimeZone.getDefault());
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("E d ''yy", Locale.US);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("E d MMM ''yy", Locale.US);
         dateFormat.setTimeZone(TimeZone.getDefault());
 
         mStartTime = timeFormat.format(startDate);
@@ -62,6 +75,10 @@ public class SleepView extends View {
         }else {
             mDateLabel = dateFormat.format(startDate)+" - "+dateFormat.format(endDate);
         }
+
+        Rect bounds = new Rect();
+        mTextPaint.getTextBounds(mEndTime, 0, mEndTime.length(), bounds);
+        mTextHeight = bounds.height();
     }
 
     @Override
@@ -82,43 +99,46 @@ public class SleepView extends View {
         mBackgroundPaint.setColor(Color.GRAY);
         mForegroundPaint.setColor(Color.WHITE);
         mTextPaint.setColor(Color.WHITE);
-        mTextPaint.setTextSize(20);
 
-        Paint.FontMetrics fontMetrics = mTextPaint.getFontMetrics();
-        mTextHeight = fontMetrics.bottom;
+        mTextPaint.setTextSize(20);
+        mTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
+        mTextPaint.setTextAlign(Paint.Align.LEFT);
     }
 
     @Override
     public void onDraw(Canvas canvas){
         final int width = getWidth(), height = getHeight();
-        final int left = getPaddingLeft(), top = getPaddingTop();
-        final int contentWidth = width - left - getPaddingRight(),
-                contentHeight = height - top - getPaddingBottom();
-
+        final int left = getPaddingLeft(), top = getPaddingTop(), right = getPaddingRight(), bottom = getPaddingBottom();
+        final int contentWidth = width - left - right;
         //Draw Test Text
         //canvas.drawText("Test", left, top, mTextPaint);
 
         if(mSleepData != null){
-            //Draw background
-            mBackgroundPaint.setStyle(Paint.Style.FILL);
-            canvas.drawRect(left, top + 5, contentWidth, contentHeight - mTextHeight - top - 15, mBackgroundPaint);
+            final float tickerTop = top + mTextHeight + 5;
+            final float tickerBottom = height - mTextHeight - 5 - bottom;
 
-            //Draw Start and end time
-            canvas.drawText(mDateLabel, left, top, mTextPaint);
-            canvas.drawText(mStartTime, left, contentHeight - mTextHeight, mTextPaint);
-            canvas.drawText(mEndTime, contentWidth - mEndWidth, contentHeight - mTextHeight, mTextPaint);
+            //Draw background
+            //mBackgroundPaint.setStyle(Paint.Style.FILL);
+            canvas.drawRect(left, tickerTop, width - right, tickerBottom, mBackgroundPaint);
 
             //Draw Regions
             final float start = (float) mSleepData.getStart(), end = (float) mSleepData.getEnd();
             final float sleepLength = end - start;
+            final float pixelScale = contentWidth/sleepLength;
+
             for(DataRegion d : mSleepData){
                 if(d.getLabel().equals(SleepData.WAKEREGION)){
-                    final float regionLeft = left + ((float) (d.getStart() - start)*contentWidth)/sleepLength;
-                    final float regionRight = left + ((float) (d.getEnd() - start)*contentWidth)/sleepLength;
+                    final float regionLeft = left + ((float) (d.getStart() - start)*pixelScale);
+                    final float regionRight = left + ((float) (d.getEnd() - start)*pixelScale);
 
-                    canvas.drawRect(regionLeft, top + 5, regionRight, contentHeight - top -mTextHeight - 15, mForegroundPaint);
+                    canvas.drawRect(regionLeft, tickerTop, regionRight, tickerBottom, mForegroundPaint);
                 }
             }
+
+            //Draw Start and end time
+            canvas.drawText(mDateLabel, left, top + mTextHeight, mTextPaint);
+            canvas.drawText(mStartTime, left, tickerBottom + 5 + mTextHeight, mTextPaint);
+            canvas.drawText(mEndTime, width - mEndWidth - right, tickerBottom + 5 + mTextHeight, mTextPaint);
         }
     }
 }

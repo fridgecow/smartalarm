@@ -43,7 +43,7 @@ public class SleepSummaryListActivity extends WearableActivity {
 
         mAdapter = new SleepDataAdapter(mSleepFiles);
         mLayoutManager = new WearableLinearLayoutManager(this, new CurvingLayoutCallback(this));
-        mLayoutManager.setReverseLayout(true);
+        //mLayoutManager.setReverseLayout(true);
         mWearableRecyclerView.setLayoutManager(mLayoutManager);
         mWearableRecyclerView.setItemAnimator(new DefaultItemAnimator());
         mWearableRecyclerView.setAdapter(mAdapter);

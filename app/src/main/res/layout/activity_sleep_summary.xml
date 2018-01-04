@@ -7,8 +7,7 @@
     android:layout_height="match_parent"
     android:padding="0dp"
     tools:context="com.fridgecow.smartalarm.SleepSummaryActivity"
-    tools:deviceIds="wear"
-    android:background="@color/dark_grey">
+    tools:deviceIds="wear">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -24,10 +23,65 @@
                 android:orientation="vertical"
                 app:boxedEdges="all">
 
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="5dp" />
+
                 <com.fridgecow.smartalarm.SleepView
                     android:id="@+id/sleepView"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:padding="0dp"
+                    android:paddingBottom="5dp"
+                    android:paddingTop="10dp" />
+
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="5dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginBottom="1dp"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginRight="5dp"
+                        android:background="@drawable/background_square_grey" />
+
+                    <TextView
+                        android:id="@+id/textView22"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/legend_sleep" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginRight="5dp"
+                        android:background="@drawable/background_square_white" />
+
+                    <TextView
+                        android:id="@+id/textView23"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/legend_wakefulness" />
+                </LinearLayout>
+
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="5dp" />
 
                 <TextView
                     android:id="@+id/label_detectedsleeptime"
@@ -40,7 +94,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="right"
-                    android:text="TextView" />
+                    android:text="TextView"
+                    android:textAppearance="@style/TextAppearance.AppCompat" />
 
                 <TextView
                     android:id="@+id/label_sleepefficiencytotal"
@@ -53,7 +108,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="right"
-                    android:text="TextView" />
+                    android:text="TextView"
+                    android:textAppearance="@style/TextAppearance.AppCompat" />
 
                 <TextView
                     android:id="@+id/label_sleepefficiencysmart"
@@ -66,7 +122,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="right"
-                    android:text="TextView" />
+                    android:text="TextView"
+                    android:textAppearance="@style/TextAppearance.AppCompat" />
 
                 <TextView
                     android:id="@+id/label_detectedwaketime"
@@ -79,7 +136,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="right"
-                    android:text="TextView" />
+                    android:text="TextView"
+                    android:textAppearance="@style/TextAppearance.AppCompat" />
 
                 <Space
                     android:layout_width="match_parent"
