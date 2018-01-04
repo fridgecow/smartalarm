@@ -53,4 +53,8 @@
     <string name="title_activity_time_input">Time Input</string>
     <string name="alarm_snooze">Snooze</string>
     <string name="title_activity_sleep_summary">SleepSummaryActivity</string>
+    <string name="detectedsleeptime">Detected Sleep Time</string>
+    <string name="sleepefficiencytotal">Sleep Efficiency (Total Tracked)</string>
+    <string name="sleepefficiencysmart"><![CDATA[Sleep Efficiency (Sleep->Wake)]]></string>
+    <string name="detectedwaketime">Detected Wake Time</string>
 </resources>

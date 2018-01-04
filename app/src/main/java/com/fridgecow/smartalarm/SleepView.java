@@ -10,6 +10,11 @@ import android.view.View;
 
 import com.jjoe64.graphview.series.DataPoint;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+
 /**
  * Created by tom on 04/01/18.
  */
@@ -22,6 +27,13 @@ public class SleepView extends View {
     private Paint mForegroundPaint;
     private TextPaint mTextPaint;
 
+    private String mDateLabel;
+    private String mStartTime;
+    private String mEndTime;
+    private float mEndWidth;
+
+    private float mTextHeight;
+
     public SleepView(Context context) {
         super(context);
 
@@ -30,6 +42,26 @@ public class SleepView extends View {
 
     public void attachSleepData(SleepData data){
         mSleepData = data;
+
+        //Extract a start and end time, and a date label
+        Date startDate = new Date((long) data.getStart());
+        Date endDate = new Date((long) data.getEnd());
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.US);
+        timeFormat.setTimeZone(TimeZone.getDefault());
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("E d ''yy", Locale.US);
+        dateFormat.setTimeZone(TimeZone.getDefault());
+
+        mStartTime = timeFormat.format(startDate);
+        mEndTime = timeFormat.format(endDate);
+
+        mEndWidth = mTextPaint.measureText(mEndTime);
+
+        if(dateFormat.format(startDate).equals(dateFormat.format(endDate))){
+            mDateLabel = dateFormat.format(startDate);
+        }else {
+            mDateLabel = dateFormat.format(startDate)+" - "+dateFormat.format(endDate);
+        }
     }
 
     @Override
@@ -47,10 +79,13 @@ public class SleepView extends View {
         mForegroundPaint = new Paint();
         mTextPaint = new TextPaint();
 
-        mBackgroundPaint.setColor(Color.BLACK);
+        mBackgroundPaint.setColor(Color.GRAY);
         mForegroundPaint.setColor(Color.WHITE);
-        mTextPaint.setColor(Color.GRAY);
+        mTextPaint.setColor(Color.WHITE);
         mTextPaint.setTextSize(20);
+
+        Paint.FontMetrics fontMetrics = mTextPaint.getFontMetrics();
+        mTextHeight = fontMetrics.bottom;
     }
 
     @Override
@@ -66,7 +101,12 @@ public class SleepView extends View {
         if(mSleepData != null){
             //Draw background
             mBackgroundPaint.setStyle(Paint.Style.FILL);
-            canvas.drawRect(left, top, contentWidth, contentHeight, mBackgroundPaint);
+            canvas.drawRect(left, top + 5, contentWidth, contentHeight - mTextHeight - top - 15, mBackgroundPaint);
+
+            //Draw Start and end time
+            canvas.drawText(mDateLabel, left, top, mTextPaint);
+            canvas.drawText(mStartTime, left, contentHeight - mTextHeight, mTextPaint);
+            canvas.drawText(mEndTime, contentWidth - mEndWidth, contentHeight - mTextHeight, mTextPaint);
 
             //Draw Regions
             final float start = (float) mSleepData.getStart(), end = (float) mSleepData.getEnd();
@@ -75,8 +115,8 @@ public class SleepView extends View {
                 if(d.getLabel().equals(SleepData.WAKEREGION)){
                     final float regionLeft = left + ((float) (d.getStart() - start)*contentWidth)/sleepLength;
                     final float regionRight = left + ((float) (d.getEnd() - start)*contentWidth)/sleepLength;
-                    Log.d("SleepView", "Region "+regionLeft+"-"+regionRight);
-                    canvas.drawRect(regionLeft, top, regionRight, contentHeight, mForegroundPaint);
+
+                    canvas.drawRect(regionLeft, top + 5, regionRight, contentHeight - top -mTextHeight - 15, mForegroundPaint);
                 }
             }
         }
