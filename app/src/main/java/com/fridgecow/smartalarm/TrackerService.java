@@ -150,6 +150,11 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 publishProgress(100*i / activity.size());
             }
 
+            //Deal with last section
+            if(!sleeping){
+                data.add(new DataRegion(activity.get(lastIndex), activity.get(activity.size()-1), SleepData.WAKEREGION));
+            }
+
             return data;
         }
 
@@ -164,6 +169,8 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 } catch (IOException e) {
                     Log.d(TAG, "Unable to open file for output");
                 }
+            }else{
+                Toast.makeText(getApplicationContext(), "Not enough data to summarise", Toast.LENGTH_SHORT).show();
             }
         }
     }

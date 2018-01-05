@@ -75,13 +75,13 @@ public class SleepSummaryActivity extends WearableActivity {
         currentMetric.setText(timeFormat.format(sleepDate));
 
         currentMetric = findViewById(R.id.sleepefficiencytotal);
-        currentMetric.setText(Math.round(wakeTime*10 / totalTime)/10.0 + "%");
+        currentMetric.setText(Math.round(wakeTime*1000 / totalTime)/10.0 + "%");
 
         currentMetric = findViewById(R.id.sleepefficiency);
         double smartWakeTime = wakeTime
                 - (mData.get(mData.size()-1).getEnd() - mData.get(mData.size()-1).getStart())
                 - (mData.get(0).getEnd() - mData.get(0).getStart());
-        currentMetric.setText(Math.round(smartWakeTime*10/smartTime)/10.0 + "%");
+        currentMetric.setText(Math.round(smartWakeTime*1000/smartTime)/10.0 + "%");
 
         currentMetric = findViewById(R.id.detectedwaketime);
         Date wakeDate = new Date((long) mData.get(mData.size() - 1).getStart());
@@ -104,6 +104,7 @@ public class SleepSummaryActivity extends WearableActivity {
         if(mData.size() == 0){
             //Delete the file, and finish(), restoring to good state
             deleteFile(mFile);
+            Toast.makeText(this, "Not enough data to summarise", Toast.LENGTH_SHORT).show();
             finish();
         }
     }
