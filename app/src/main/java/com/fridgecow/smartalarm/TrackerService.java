@@ -131,7 +131,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 }
                 D *= P;
 
-                Log.d(TAG, "Discriminant: "+D);
+                //Log.d(TAG, "Discriminant: "+D);
 
                 if(D < 1) { //Sleep
                     if(!sleeping){
@@ -158,10 +158,12 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             //Store somewhere useful
             //For now, "useful" is more csv files
             //Put this in SleepData object?
-            try{
-                result.writeOut(TrackerService.this, SUMMARY_PREFIX+((int)result.getEnd()));
-            }catch(IOException e){
-                Log.d(TAG, "Unable to open file for output");
+            if(result.size() > 0) {
+                try {
+                    result.writeOut(TrackerService.this, SUMMARY_PREFIX + ((int) result.getEnd()));
+                } catch (IOException e) {
+                    Log.d(TAG, "Unable to open file for output");
+                }
             }
         }
     }

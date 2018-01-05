@@ -56,6 +56,8 @@ public class SleepSummaryActivity extends WearableActivity {
 
         mSleepView.attachSleepData(mData);
 
+        if(mData.size() == 0) return;
+
         //Parse regions and generate necessary statistics
         double totalTime = mData.getEnd() - mData.getStart();
         double smartTime = mData.get(mData.size()-1).getStart() - mData.get(0).getEnd();
