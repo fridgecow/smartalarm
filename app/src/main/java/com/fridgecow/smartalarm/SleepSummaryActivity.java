@@ -75,13 +75,13 @@ public class SleepSummaryActivity extends WearableActivity {
         currentMetric.setText(timeFormat.format(sleepDate));
 
         currentMetric = findViewById(R.id.sleepefficiencytotal);
-        currentMetric.setText(Math.round(wakeTime*1000 / totalTime)/10.0 + "%");
+        currentMetric.setText(Math.round(1000 -wakeTime*1000 / totalTime)/10.0 + "%");
 
         currentMetric = findViewById(R.id.sleepefficiency);
         double smartWakeTime = wakeTime
                 - (mData.get(mData.size()-1).getEnd() - mData.get(mData.size()-1).getStart())
                 - (mData.get(0).getEnd() - mData.get(0).getStart());
-        currentMetric.setText(Math.round(smartWakeTime*1000/smartTime)/10.0 + "%");
+        currentMetric.setText(Math.round(1000 - smartWakeTime*1000/smartTime)/10.0 + "%");
 
         currentMetric = findViewById(R.id.detectedwaketime);
         Date wakeDate = new Date((long) mData.get(mData.size() - 1).getStart());

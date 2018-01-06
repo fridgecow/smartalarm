@@ -136,7 +136,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 if(D < 1) { //Sleep
                     if(!sleeping){
                         //End a region
-                        data.add(new DataRegion(activity.get(lastIndex), activity.get(i), SleepData.WAKEREGION));
+                        data.add(new DataRegion(activity.get(lastIndex), activity.get(i-1), SleepData.WAKEREGION));
                         sleeping = true;
                     }
                 }else { //Wakefulness
@@ -165,7 +165,8 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             //Put this in SleepData object?
             if(result.size() > 0) {
                 try {
-                    result.writeOut(TrackerService.this, SUMMARY_PREFIX + ((int) result.getEnd()));
+                    result.writeOut(TrackerService.this, SUMMARY_PREFIX + ((long) result.getEnd()));
+                    Toast.makeText(getApplicationContext(), "Summary Complete", Toast.LENGTH_SHORT).show();
                 } catch (IOException e) {
                     Log.d(TAG, "Unable to open file for output");
                 }
@@ -533,7 +534,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 int permissionCheck = ContextCompat.checkSelfPermission(this,
                         Manifest.permission.BODY_SENSORS);
 
-                if(permissionCheck != PackageManager.PERMISSION_GRANTED){
+                if(permissionCheck == PackageManager.PERMISSION_GRANTED){
                     int hrmPoll = Integer.parseInt(mPreferences.getString("acc_polling_rate", "3"));
                     mSensorManager.registerListener(
                             this,

@@ -93,6 +93,7 @@ public class MainActivity extends WearableActivity {
 
         //Start tracking service and bind to it
         Intent service = new Intent(this, TrackerService.class);
+        service.putExtra("task", "start");
         startService(service);
         mBinding = true;
         bindService(service, mConnection, 0);
