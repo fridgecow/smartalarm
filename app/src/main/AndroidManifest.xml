@@ -58,22 +58,10 @@
             android:label="@string/title_activity_time_input" />
         <activity
             android:name=".SleepSummaryListActivity"
-            android:label="@string/title_activity_sleep_summary">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:label="@string/title_activity_sleep_summary" />
         <activity
             android:name=".SleepSummaryActivity"
-            android:label="@string/title_activity_sleep_summary">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:label="@string/title_activity_sleep_summary" />
     </application>
 
 </manifest>
