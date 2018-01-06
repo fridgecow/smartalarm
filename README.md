@@ -6,6 +6,7 @@ It's pretty bad right now, but it'll get better! Please feel free to pull reques
 
 ## Links
 [Play Store / Alpha Test](https://play.google.com/apps/testing/com.fridgecow.smartalarm)
+
 [Screenshots](https://github.com/fridgecow/smartalarm/tree/master/screenshots)
 
 ## Current Features:
