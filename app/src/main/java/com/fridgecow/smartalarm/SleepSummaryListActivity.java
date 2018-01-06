@@ -10,6 +10,7 @@ import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class SleepSummaryListActivity extends WearableActivity {
@@ -41,6 +42,7 @@ public class SleepSummaryListActivity extends WearableActivity {
                 mSleepFiles.add(file);
             }
         }
+        Collections.reverse(mSleepFiles);
 
         mAdapter = new SleepDataAdapter(this, mSleepFiles);
         mLayoutManager = new WearableLinearLayoutManager(this, new CurvingLayoutCallback(this));

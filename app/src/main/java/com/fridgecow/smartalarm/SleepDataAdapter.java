@@ -80,7 +80,7 @@ public class SleepDataAdapter extends WearableRecyclerView.Adapter<SleepDataAdap
 
     @Override
     public void onBindViewHolder(SleepViewHolder holder, int position) {
-        holder.attachSleepData(mData.get(getItemCount() - position - 1));
+        holder.attachSleepData(mData.get(position));
     }
 
     @Override
