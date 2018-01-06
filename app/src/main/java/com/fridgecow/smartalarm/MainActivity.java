@@ -256,8 +256,7 @@ public class MainActivity extends WearableActivity {
                 mStopButton.setImageResource(android.R.drawable.ic_media_pause);
                 mResetButton.setImageResource(R.drawable.ic_stop);
                 mTextView.setVisibility(View.GONE);
-            } else {
-
+            }else{
                 mStopButton.setImageResource(android.R.drawable.ic_media_play);
 
                 if(mService.isPaused()){

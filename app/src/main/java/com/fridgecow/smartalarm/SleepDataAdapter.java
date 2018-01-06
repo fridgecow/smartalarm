@@ -1,5 +1,6 @@
 package com.fridgecow.smartalarm;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.support.wear.widget.WearableRecyclerView;
@@ -19,14 +20,15 @@ import java.util.List;
 public class SleepDataAdapter extends WearableRecyclerView.Adapter<SleepDataAdapter.SleepViewHolder> {
 
     private final List<String> mData;
+    private Activity mContext;
 
     public class SleepViewHolder extends WearableRecyclerView.ViewHolder {
         private SleepData mData;
         private String mFileName;
-        private Context mContext;
+        private Activity mContext;
         private SleepView mView;
 
-        public SleepViewHolder(SleepView view, Context c) {
+        public SleepViewHolder(SleepView view, Activity c) {
             super(view);
             mView = view;
             mContext = c;
@@ -41,7 +43,7 @@ public class SleepDataAdapter extends WearableRecyclerView.Adapter<SleepDataAdap
                                 view.getContext(),
                                 mFileName);
 
-                        view.getContext().startActivity(myIntent);
+                        mContext.startActivityForResult(myIntent, SleepSummaryActivity.VIEW);
                     }
                 }
             });
@@ -59,12 +61,13 @@ public class SleepDataAdapter extends WearableRecyclerView.Adapter<SleepDataAdap
             }
         }
 
-        public Context getContext(){
+        public Activity getContext(){
             return mContext;
         }
     }
 
-    public SleepDataAdapter(List<String> sleepDataFilesList) {
+    public SleepDataAdapter(Activity context, List<String> sleepDataFilesList) {
+        mContext = context;
         mData = sleepDataFilesList;
     }
 
@@ -72,7 +75,7 @@ public class SleepDataAdapter extends WearableRecyclerView.Adapter<SleepDataAdap
     public SleepViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         SleepView item = new SleepView(parent.getContext());
         item.setPadding(20, 5, 20, 5);
-        return new SleepViewHolder(item, parent.getContext());
+        return new SleepViewHolder(item, mContext);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.fridgecow.smartalarm;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.wear.widget.CurvingLayoutCallback;
@@ -41,7 +42,7 @@ public class SleepSummaryListActivity extends WearableActivity {
             }
         }
 
-        mAdapter = new SleepDataAdapter(mSleepFiles);
+        mAdapter = new SleepDataAdapter(this, mSleepFiles);
         mLayoutManager = new WearableLinearLayoutManager(this, new CurvingLayoutCallback(this));
         //mLayoutManager.setReverseLayout(true);
         mWearableRecyclerView.setLayoutManager(mLayoutManager);
@@ -50,5 +51,24 @@ public class SleepSummaryListActivity extends WearableActivity {
 
         // Enables Always-on
         //setAmbientEnabled();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data){
+        if(requestCode == SleepSummaryActivity.VIEW){
+            if(resultCode == RESULT_OK){
+                if(data != null && data.getStringExtra("file") != null){
+                    String file = data.getStringExtra("file");
+
+                    //Remove file
+                    int index = mSleepFiles.indexOf(file);
+                    if(index >= 0) {
+                        mSleepFiles.remove(index);
+                        mAdapter.notifyItemRemoved(index);
+                        mAdapter.notifyItemRangeChanged(index, mSleepFiles.size());
+                    }
+                }
+            }
+        }
     }
 }

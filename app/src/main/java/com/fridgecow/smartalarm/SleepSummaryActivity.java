@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.wearable.activity.WearableActivity;
 import android.view.View;
@@ -18,6 +19,8 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 public class SleepSummaryActivity extends WearableActivity {
+    public static final int VIEW = 0;
+    public static final String DELETED = "deleted";
     public static String PREF_FILE;
     public static String PREF_DATA;
 
@@ -48,6 +51,10 @@ public class SleepSummaryActivity extends WearableActivity {
                             public void onClick(DialogInterface dialog, int whichButton) {
                                 deleteFile(mFile);
                                 Toast.makeText(view.getContext(), "Deleted :(", Toast.LENGTH_SHORT).show();
+
+                                Intent ret = new Intent(DELETED);
+                                ret.putExtra("file", mFile);
+                                setResult(RESULT_OK, ret);
                                 finish();
                             }})
                         .setNegativeButton(android.R.string.no, null).show();
