@@ -16,6 +16,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.AsyncTask;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
@@ -49,6 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.Timer;
 
 import preference.TimePreference;
 
@@ -100,6 +102,86 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     private boolean mRunning;
 
     private SharedPreferences.OnSharedPreferenceChangeListener mPreferenceListener;
+
+    private Handler mTrackingHandler = new Handler();
+    private Runnable mTrackingRunnable = new Runnable(){
+        @Override
+        public void run() {
+            if(mRunning){
+                Log.d(TAG, "No task found - collecting maximum");
+                if(mAccelData) {
+                    //Get a maximum of all data collected
+                    long time = System.currentTimeMillis();
+                    mSleepMotion.add(new DataPoint(time, mAccelMax));
+                    mSleepHR.add(new DataPoint(time, mHRMax));
+
+                    //Check if sleeping
+                    if(mAccelMax < AWAKE_THRESH){
+                        if(!mSleeping) {
+                            mSleepCount++;
+                            if(mSleepCount > 10){ //10 minutes - should be in config!
+                                mSleeping = true;
+                                mAwakeCount = 0;
+
+                                triggerIFTTT(TRIGGER_ASLEEP);
+
+                                //Update notification
+                                mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("You're asleep!").build());
+                            }
+
+                        }
+                    }else if(mSleeping){
+                        mSleepCount = 0;
+                        mAwakeCount++;
+                        if(mAwakeCount > 1) { //Allow 1 false-positive
+                            mSleeping = false;
+                            mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Good morning!").build());
+
+                            triggerIFTTT(TRIGGER_AWAKE);
+                        }
+                    }
+
+                    //If smart alarm, check if "light sleep"
+                    if(mSmartAlarm != null){
+                        Date now = Calendar.getInstance().getTime();
+
+                        int window = mPreferences.getInt("smartalarm_window", 30);
+
+                        //Check alarm range
+                        if(now.after(mSmartAlarm.getTime())){
+                            activateAlarm();
+                        }else if(mSmartAlarm.getTime().getTime() - now.getTime() <= window*60*1000){
+                            Log.d(TAG, "In alarm range");
+
+                            //Get mean accel motion
+                            double total = 0.0;
+                            for(DataPoint d : mSleepMotion){
+                                total+=d.getY();
+                            }
+                            double mean = total / mSleepMotion.size();
+
+                            if(mAccelMax > mean){
+                                //Light sleep, activate alarm
+                                Log.d(TAG, "This is light sleep, activating alarm");
+                                activateAlarm();
+                            }
+                        }
+                    }
+                    //Reset
+                    Log.d(TAG, "Max Ac of " + mAccelMax + " found");
+                    Log.d(TAG, "Max HR of "+ mHRMax + " found");
+
+                    mHRMax = 0.0;
+                    mAccelMax = 0.0;
+                    mAccelData = false;
+                }
+                int pollRate = mPreferences.getInt("datapoint_rate", 1);
+                mTrackingHandler.postDelayed(this, pollRate*60*1000);
+            }else{
+                Log.d(TAG, "Tracker Paused, not collecting data");
+            }
+        }
+    };
 
     private class SleepProcessor extends AsyncTask<List<DataPoint>, Integer, SleepData>{
 
@@ -227,81 +309,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(intent == null || intent.getStringExtra("task") == null){
-            if(mRunning){
-                Log.d(TAG, "No task found - collecting maximum");
-                if(mAccelData) {
-                    //Get a maximum of all data collected
-                    long time = System.currentTimeMillis();
-                    mSleepMotion.add(new DataPoint(time, mAccelMax));
-                    mSleepHR.add(new DataPoint(time, mHRMax));
-
-                    //Check if sleeping
-                    if(mAccelMax < AWAKE_THRESH){
-                        if(!mSleeping) {
-                            mSleepCount++;
-                            if(mSleepCount > 10){ //10 minutes - should be in config!
-                                mSleeping = true;
-                                mAwakeCount = 0;
-
-                                triggerIFTTT(TRIGGER_ASLEEP);
-
-                                //Update notification
-                                mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("You're asleep!").build());
-                            }
-
-                        }
-                    }else if(mSleeping){
-                        mSleepCount = 0;
-                        mAwakeCount++;
-                        if(mAwakeCount > 1) { //Allow 1 false-positive
-                            mSleeping = false;
-                            mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Good morning!").build());
-
-                            triggerIFTTT(TRIGGER_AWAKE);
-                        }
-                    }
-
-                    //If smart alarm, check if "light sleep"
-                    if(mSmartAlarm != null){
-                        Date now = Calendar.getInstance().getTime();
-
-                        int window = mPreferences.getInt("smartalarm_window", 30);
-
-                        //Check alarm range
-                        if(now.after(mSmartAlarm.getTime())){
-                            activateAlarm();
-                        }else if(mSmartAlarm.getTime().getTime() - now.getTime() <= window*60*1000){
-                            Log.d(TAG, "In alarm range");
-
-                            //Get mean accel motion
-                            double total = 0.0;
-                            for(DataPoint d : mSleepMotion){
-                                total+=d.getY();
-                            }
-                            double mean = total / mSleepMotion.size();
-
-                            if(mAccelMax > mean){
-                                //Light sleep, activate alarm
-                                Log.d(TAG, "This is light sleep, activating alarm");
-                                activateAlarm();
-                            }
-                        }
-                    }
-                    //Reset
-                    Log.d(TAG, "Max Ac of " + mAccelMax + " found");
-                    Log.d(TAG, "Max HR of "+ mHRMax + " found");
-
-                    mHRMax = 0.0;
-                    mAccelMax = 0.0;
-                    mAccelData = false;
-
-
-                }
-            }else{
-                Log.d(TAG, "Tracker Paused, not collecting data");
-            }
-        }else{
+        if(intent != null || intent.getStringExtra("task") != null){
             String task = intent.getStringExtra("task");
             Log.d(TAG, task);
             if(task.equals("reset")){
@@ -471,12 +479,16 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             mSensorManager.unregisterListener(this);
 
             //Stop minute-by-minute tracking
+            mTrackingHandler.removeCallbacks(mTrackingRunnable);
+
+            /*
             Intent intent = new Intent(this, TrackerService.class);
             PendingIntent pendingIntent = PendingIntent.getService(this,  0, intent, PendingIntent.FLAG_NO_CREATE);
             if(pendingIntent != null){
                 AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
                 alarmManager.cancel(pendingIntent);
-            }
+            }*/
+
 
             //Set notification
             Intent appIntent = new Intent(this, MainActivity.class);
@@ -581,8 +593,11 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             PendingIntent pingIntent = PendingIntent.getService(this,  0, new Intent(this, TrackerService.class), 0);
             AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
 
-            int pollRate = mPreferences.getInt("datapoint_rate", 1);
-            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), pollRate*60000, pingIntent);
+
+            //alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), pollRate*60000, pingIntent);
+
+            //Attach the runnable to the handler, which will reschedule itself every pollRate
+            mTrackingHandler.post(mTrackingRunnable);
 
             triggerIFTTT(TRIGGER_TRACKINGSTART);
         }
