@@ -148,7 +148,7 @@ public class MainActivity extends WearableActivity {
             @Override
             public void onClick(View view) {
                 if(mBound) {
-                    if(mService.isRunning()){
+                    if(mService.isRunning() || mService.isPaused()){
                         mService.stop();
                         updateViews();
                     } else {
@@ -257,8 +257,14 @@ public class MainActivity extends WearableActivity {
                 mResetButton.setImageResource(R.drawable.ic_stop);
                 mTextView.setVisibility(View.GONE);
             } else {
+
                 mStopButton.setImageResource(android.R.drawable.ic_media_play);
-                mResetButton.setImageResource(R.drawable.ic_cc_clear);
+
+                if(mService.isPaused()){
+                    mResetButton.setImageResource(R.drawable.ic_stop);
+                }else {
+                    mResetButton.setImageResource(R.drawable.ic_cc_clear);
+                }
             }
         }
 

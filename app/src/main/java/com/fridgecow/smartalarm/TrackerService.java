@@ -100,7 +100,9 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     private NotificationCompat.Builder mNotification;
     private NotificationManager mNotificationManager;
     private RequestQueue mQueue;
-    private boolean mRunning;
+
+    private boolean mRunning = false;
+    private boolean mPaused = false;
 
     private SharedPreferences.OnSharedPreferenceChangeListener mPreferenceListener;
 
@@ -478,6 +480,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     public void pause(){
         if(mRunning) {
             mRunning = false;
+            mPaused = true;
 
             //Unbind service listeners
             mSensorManager.unregisterListener(this);
@@ -518,6 +521,11 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     public void play(){
         if(!mRunning){
             mRunning = true;
+
+            if(!mPaused){ //Perform a reset
+                reset();
+            }
+            mPaused = false;
 
             //Register sensors
             mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -605,10 +613,12 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         return mRunning;
     }
 
+    public boolean isPaused() { return mPaused; }
     public void stop(){
         if(mRunning){
             pause();
         }
+        mPaused = false;
 
         if(mSleepMotion.size() > 0) {
             //Auto export?
