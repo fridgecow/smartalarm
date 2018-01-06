@@ -90,6 +90,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     private boolean mSleeping;
     private int mSleepCount;
     private int mAwakeCount = 0;
+    private double mSleepMotionMean = -1;
 
     private Calendar mSmartAlarm;
 
@@ -153,28 +154,31 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                         }else if(mSmartAlarm.getTime().getTime() - now.getTime() <= window*60*1000){
                             Log.d(TAG, "In alarm range");
 
-                            //Get mean accel motion
-                            double total = 0.0;
-                            for(DataPoint d : mSleepMotion){
-                                total+=d.getY();
-                            }
-                            double mean = total / mSleepMotion.size();
+                            if(mSleepMotionMean < 0) {
+                                //Get mean accel motion
+                                double total = 0.0;
+                                for (DataPoint d : mSleepMotion) {
+                                    total += d.getY();
+                                }
 
-                            if(mAccelMax > mean){
+                                mSleepMotionMean = total / mSleepMotion.size();
+                            }
+
+                            if(mAccelMax > mSleepMotionMean){
                                 //Light sleep, activate alarm
-                                Log.d(TAG, "This is light sleep, activating alarm");
                                 activateAlarm();
                             }
                         }
                     }
                     //Reset
-                    Log.d(TAG, "Max Ac of " + mAccelMax + " found");
-                    Log.d(TAG, "Max HR of "+ mHRMax + " found");
+                    Log.d(TAG, "Max Acc:" + mAccelMax + ", HR: "+mHRMax);
 
                     mHRMax = 0.0;
                     mAccelMax = 0.0;
                     mAccelData = false;
                 }
+
+                //Reschedule this
                 int pollRate = mPreferences.getInt("datapoint_rate", 1);
                 mTrackingHandler.postDelayed(this, pollRate*60*1000);
             }else{
@@ -309,7 +313,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(intent != null || intent.getStringExtra("task") != null){
+        if(intent != null && intent.getStringExtra("task") != null){
             String task = intent.getStringExtra("task");
             Log.d(TAG, task);
             if(task.equals("reset")){
@@ -481,15 +485,6 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             //Stop minute-by-minute tracking
             mTrackingHandler.removeCallbacks(mTrackingRunnable);
 
-            /*
-            Intent intent = new Intent(this, TrackerService.class);
-            PendingIntent pendingIntent = PendingIntent.getService(this,  0, intent, PendingIntent.FLAG_NO_CREATE);
-            if(pendingIntent != null){
-                AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-                alarmManager.cancel(pendingIntent);
-            }*/
-
-
             //Set notification
             Intent appIntent = new Intent(this, MainActivity.class);
             PendingIntent appPending = PendingIntent.getActivity(this,  0, appIntent, 0);
@@ -590,13 +585,6 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             startForeground(ONGOING_NOTIFICATION_ID, notification);
 
             //Ping ourselves every datapoint_rate minutes
-            PendingIntent pingIntent = PendingIntent.getService(this,  0, new Intent(this, TrackerService.class), 0);
-            AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-
-
-            //alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), pollRate*60000, pingIntent);
-
-            //Attach the runnable to the handler, which will reschedule itself every pollRate
             mTrackingHandler.post(mTrackingRunnable);
 
             triggerIFTTT(TRIGGER_TRACKINGSTART);
