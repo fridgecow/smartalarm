@@ -185,11 +185,11 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent == null || intent.getStringExtra("task") == null) {
             if(mRunning){
-                Log.d(TAG, "No task found - collecting maximum");
                 if(mAccelData) {
                     mSleepData.recordPoint();
 
-                    if(mSleepData.getSleepingAt(mSleepData.getDataLength())){
+                    //Check if sleeping
+                    if(mSleepData.getSleepingAt(mSleepData.getDataLength()-1)){
                         if(!mSleeping){
                             mSleeping = true;
                             triggerIFTTT(TRIGGER_ASLEEP);

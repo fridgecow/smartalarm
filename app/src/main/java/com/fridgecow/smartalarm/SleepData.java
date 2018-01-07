@@ -187,21 +187,14 @@ public class SleepData {
 
     public boolean getSleepingAt(int index){
         if(getDataLength() < 7){
-            return true; //Not enough data yet - guess wakeful
+            return false; //Not enough data yet - guess wakeful
         }
 
-        if(index >= getDataLength() - 2){
-            index = getDataLength() - 2; //Estimate current based on past :/
-        }else if(index < 4){
-            index = 4; //Estimate based on first available data
-        }
         double D = 0;
         for(int j = 0; j < W.length; j++){
-            double a = mSleepHR.get(index+j-4).getY();
-            if(a > 300){
-                a = 300;
-            }
-
+            //Ensure index is in range - if out of range, duplicate data
+            int i = Math.max(Math.min(index+j-4, mSleepMotion.size()-1), 0);
+            double a = Math.min(mSleepMotion.get(i).getY(), 300); //Cap at 300
             D += a*W[j];
         }
         D *= P;
