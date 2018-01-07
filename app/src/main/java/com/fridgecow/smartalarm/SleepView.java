@@ -7,10 +7,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.text.TextPaint;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
-
-import com.jjoe64.graphview.series.DataPoint;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -22,7 +19,7 @@ import java.util.TimeZone;
  */
 
 public class SleepView extends View {
-    private SleepData mSleepData;
+    private SleepSummaryData mSleepData;
 
     //Things for drawing
     private Paint mBackgroundPaint;
@@ -53,7 +50,7 @@ public class SleepView extends View {
         init(context);
     }
 
-    public void attachSleepData(SleepData data){
+    public void attachSleepData(SleepSummaryData data){
         mSleepData = data;
 
         //Extract a start and end time, and a date label
@@ -132,7 +129,7 @@ public class SleepView extends View {
             final float pixelScale = contentWidth/sleepLength;
 
             for(DataRegion d : mSleepData){
-                if(d.getLabel().equals(SleepData.WAKEREGION)){
+                if(d.getLabel().equals(SleepSummaryData.WAKEREGION)){
                     final float regionLeft = left + ((float) (d.getStart() - start)*pixelScale);
                     final float regionRight = left + ((float) (d.getEnd() - start)*pixelScale);
 

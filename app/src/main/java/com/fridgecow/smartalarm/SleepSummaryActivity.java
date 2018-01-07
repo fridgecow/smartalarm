@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.wearable.activity.WearableActivity;
 import android.view.View;
@@ -24,7 +23,7 @@ public class SleepSummaryActivity extends WearableActivity {
     public static String PREF_FILE;
     public static String PREF_DATA;
 
-    private SleepData mData;
+    private SleepSummaryData mData;
     private String mFile;
 
     private SleepView mSleepView;
@@ -70,7 +69,7 @@ public class SleepSummaryActivity extends WearableActivity {
         double smartTime = mData.get(mData.size()-1).getStart() - mData.get(0).getEnd();
         double wakeTime = 0;
         for(DataRegion d : mData){
-            if(d.getLabel().equals(SleepData.WAKEREGION)){
+            if(d.getLabel().equals(SleepSummaryData.WAKEREGION)){
                 wakeTime += d.getEnd() - d.getStart();
             }
         }
@@ -103,7 +102,7 @@ public class SleepSummaryActivity extends WearableActivity {
         }
 
         try {
-            mData = new SleepData(this, mFile);
+            mData = new SleepSummaryData(this, mFile);
         }catch(IOException e){
             throw new IllegalArgumentException("Sleep file invalid");
         }

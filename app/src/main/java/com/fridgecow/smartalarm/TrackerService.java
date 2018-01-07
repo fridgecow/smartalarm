@@ -16,11 +16,9 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.AsyncTask;
 import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -50,7 +48,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.Timer;
 
 import preference.TimePreference;
 
@@ -83,19 +80,22 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     private SensorManager mSensorManager;
     private SharedPreferences mPreferences;
 
-    private double mAccelMax = 0.0; //Temporary maxima
+    //private double mAccelMax = 0.0; //Temporary maxima
     private boolean mAccelData = false;
     private double[] mAccelLast = {0.0, 0.0, 0.0}; //Keeps previous sensor value
-    private List<DataPoint> mSleepMotion; //Time -> max motion
+
+    //private List<DataPoint> mSleepMotion; //Time -> max motion
     private boolean mSleeping;
-    private int mSleepCount;
-    private int mAwakeCount = 0;
+    //private int mSleepCount;
+    //private int mAwakeCount = 0;
     private double mSleepMotionMean = -1;
 
     private Calendar mSmartAlarm;
 
-    private double mHRMax = 0.0;
-    private List<DataPoint> mSleepHR; //Time -> max HR
+    //private double mHRMax = 0.0;
+    //private List<DataPoint> mSleepHR; //Time -> max HR
+
+    private SleepData mSleepData;
 
     private NotificationCompat.Builder mNotification;
     private NotificationManager mNotificationManager;
@@ -106,67 +106,19 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     private SharedPreferences.OnSharedPreferenceChangeListener mPreferenceListener;
 
-    private class SleepProcessor extends AsyncTask<List<DataPoint>, Integer, SleepData>{
-        //Actigraphy constants - make these configurable!
-        private final double P = 0.001;
-        private final double[] W = {106.0, 54.0, 58.0, 76.0, 230.0, 74.0, 67.0};
-
+    private class SleepProcessor extends AsyncTask<SleepData, Integer, SleepSummaryData>{
         @Override
-        protected SleepData doInBackground(List<DataPoint>[] lists) {
-            //For now, only deal with the first list - accelerometer data
-            List<DataPoint> activity = lists[0];
-
-            //Do actigraphy algorithm
-            //https://github.com/fridgecow/smartalarm/wiki/Sleep-Detection
-
-            SleepData data = new SleepData(activity.get(0).getX(), activity.get(activity.size()-1).getX());
-            boolean sleeping = false;
-            int lastIndex = 0;
-            for(int i = 4; i < activity.size() - 2; i++){
-                //Do weighted sum into 'D'
-                double D = 0;
-                for(int j = 0; j < W.length; j++){
-                    double a = activity.get(i+j-4).getY();
-                    if(a > 300){
-                        a = 300;
-                    }
-
-                    D += a*W[j];
-                }
-                D *= P;
-
-                //Log.d(TAG, "Discriminant: "+D);
-
-                if(D < 1) { //Sleep
-                    if(!sleeping){
-                        //End a region
-                        data.add(new DataRegion(activity.get(lastIndex), activity.get(i-1), SleepData.WAKEREGION));
-                        sleeping = true;
-                    }
-                }else { //Wakefulness
-                    if(sleeping){
-                        //Start a region
-                        lastIndex = i;
-                        sleeping = false;
-                    }
-                }
-
-                publishProgress(100*i / activity.size());
-            }
-
-            //Deal with last section
-            if(!sleeping){
-                data.add(new DataRegion(activity.get(lastIndex), activity.get(activity.size()-1), SleepData.WAKEREGION));
-            }
-
-            return data;
+        protected SleepSummaryData doInBackground(SleepData[] lists) {
+            //For now, only deal with the first SleepData
+            SleepData data = lists[0];
+            SleepSummaryData summarydata = new SleepSummaryData(data);
+            return summarydata;
         }
 
         @Override
-        protected void onPostExecute(SleepData result){
+        protected void onPostExecute(SleepSummaryData result){
             //Store somewhere useful
             //For now, "useful" is more csv files
-            //Put this in SleepData object?
             if(result.size() > 0) {
                 try {
                     result.writeOut(TrackerService.this, SUMMARY_PREFIX + ((long) result.getEnd()));
@@ -198,17 +150,17 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     @Override
     public void onCreate(){
         //Initialise values
-        mSleepMotion = new ArrayList<>();
-        mSleepHR = new ArrayList<>();
+        mSleepData = new SleepData(this);
+        //mSleepMotion = new ArrayList<>();
+        //mSleepHR = new ArrayList<>();
         mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mQueue = Volley.newRequestQueue(this);
 
         //Fill SleepMotion
         try {
-            readData(OFFLINE_ACC, mSleepMotion);
-            readData(OFFLINE_HRM, mSleepHR);
-        }catch(FileNotFoundException e){
-            Log.d(TAG, "No offline store found - starting from scratch");
+            //readData(OFFLINE_ACC, mSleepMotion);
+            //readData(OFFLINE_HRM, mSleepHR);
+            mSleepData.readIn();
         }catch(IOException e){
             Log.d(TAG, "Problem reading offline store");
         }
@@ -235,35 +187,18 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             if(mRunning){
                 Log.d(TAG, "No task found - collecting maximum");
                 if(mAccelData) {
-                    //Get a maximum of all data collected
-                    long time = System.currentTimeMillis();
-                    mSleepMotion.add(new DataPoint(time, mAccelMax));
-                    mSleepHR.add(new DataPoint(time, mHRMax));
+                    mSleepData.recordPoint();
 
-                    //Check if sleeping
-                    if(mAccelMax < AWAKE_THRESH){
-                        if(!mSleeping) {
-                            mSleepCount++;
-                            if(mSleepCount > 10){ //10 minutes - should be in config!
-                                mSleeping = true;
-                                mAwakeCount = 0;
-
-                                triggerIFTTT(TRIGGER_ASLEEP);
-
-                                //Update notification
-                                mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("You're asleep!").build());
-                            }
-
+                    if(mSleepData.getSleepingAt(mSleepData.getDataLength())){
+                        if(!mSleeping){
+                            mSleeping = true;
+                            triggerIFTTT(TRIGGER_ASLEEP);
+                            mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("You're asleep!").build());
                         }
                     }else if(mSleeping){
-                        mSleepCount = 0;
-                        mAwakeCount++;
-                        if(mAwakeCount > 1) { //Allow 1 false-positive
-                            mSleeping = false;
-                            mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Good morning!").build());
-
-                            triggerIFTTT(TRIGGER_AWAKE);
-                        }
+                        mSleeping = false;
+                        mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Good morning!").build());
+                        triggerIFTTT(TRIGGER_AWAKE);
                     }
 
                     //If smart alarm, check if "light sleep"
@@ -279,26 +214,17 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                             Log.d(TAG, "In alarm range");
 
                             if(mSleepMotionMean < 0) {
-                                //Get mean accel motion
-                                double total = 0.0;
-                                for (DataPoint d : mSleepMotion) {
-                                    total += d.getY();
-                                }
-
-                                mSleepMotionMean = total / mSleepMotion.size();
+                                mSleepMotionMean = mSleepData.getMotionMean();
                             }
 
-                            if(mAccelMax > mSleepMotionMean){
+                            if(mSleepData.getMotionAt(mSleepData.getDataLength()) > mSleepMotionMean){
                                 //Light sleep, activate alarm
                                 activateAlarm();
                             }
                         }
                     }
-                    //Reset
-                    Log.d(TAG, "Max Acc:" + mAccelMax + ", HR: "+mHRMax);
 
-                    mHRMax = 0.0;
-                    mAccelMax = 0.0;
+                    //Reset
                     mAccelData = false;
                 }
             }else{
@@ -342,17 +268,13 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             //Calculate magnitude
             if(mAccelData) {
                 //Calculate magnitude of difference between
-                //now and previous. If it's the biggest, update
-                //mAccelMax
+                //now and previous.
                 double value = 0.0;
                 for(int i = 0; i < mAccelLast.length; i++){
                     value += Math.pow(mAccelLast[i] - event.values[i], 2);
                     mAccelLast[i] = event.values[i];
                 }
-
-                if(value > mAccelMax){
-                    mAccelMax = value;
-                }
+                mSleepData.recordAccelSensor(value);
             }else{
                 //Set previous
                 for(int i = 0; i < mAccelLast.length; i++){
@@ -363,9 +285,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             }
         }else if(event.sensor.getType() == Sensor.TYPE_HEART_RATE){
             //Collect HR info
-            if(event.values[0] > mHRMax){
-                mHRMax = event.values[0];
-            }
+            mSleepData.recordHRSensor(event.values[0]);
         }
     }
 
@@ -373,8 +293,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     public void onDestroy(){
         //Write out to file
         try {
-            saveData(OFFLINE_ACC, mSleepMotion);
-            saveData(OFFLINE_HRM, mSleepHR);
+            mSleepData.writeOut();
         }catch(IOException e){
             Log.d(TAG,"Failed to write out to offline store.");
         }
@@ -390,48 +309,11 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     /* Class API */
 
     public DataPoint[] getSleepMotion(){
-        return mSleepMotion.toArray(new DataPoint[mSleepMotion.size()]);
+        return mSleepData.getSleepMotion().toArray(new DataPoint[mSleepData.getDataLength()]);
     }
 
     public DataPoint[] getSleepHR(){
-        return mSleepHR.toArray(new DataPoint[mSleepHR.size()]);
-    }
-
-    public void saveData(String file, List<DataPoint> list) throws IOException{
-        final BufferedWriter DataStore = new BufferedWriter(new OutputStreamWriter(openFileOutput(file, Context.MODE_APPEND)));
-        Log.d(TAG, "Writing to offline store");
-        for (DataPoint d : list) {
-            DataStore.write(d.getX() + "," + d.getY() + "\n");
-        }
-        DataStore.close();
-    }
-
-    public void readData(String file, List<DataPoint> list) throws IOException{
-        FileInputStream fis = openFileInput(file);
-        BufferedReader br = new BufferedReader(new InputStreamReader(fis));
-
-        Log.d(TAG, "Reading from offline store");
-
-        String line = "";
-        while ((line = br.readLine()) != null) {
-            String[] data = line.split(",");
-            list.add(new DataPoint(Double.parseDouble(data[0]), Double.parseDouble(data[1])));
-        }
-
-        Collections.sort(list, new Comparator<DataPoint>() {
-            @Override
-            public int compare(DataPoint dataPoint, DataPoint t1) {
-                if(dataPoint.getX() < t1.getX()){
-                    return -1;
-                }else if(dataPoint.getX() == t1.getX()){
-                    return 0;
-                }else{
-                    return 1;
-                }
-            }
-        });
-
-        br.close();
+        return mSleepData.getSleepHR().toArray(new DataPoint[mSleepData.getDataLength()]);
     }
 
     public void exportData() {
@@ -446,14 +328,14 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
             //Loop through datapoints to get CSV data
             StringBuilder csv = new StringBuilder("Unix Time,Motion,Heart Rate\n");
-            for (int i = 0; i < mSleepMotion.size(); i++) {
-                DataPoint d = mSleepMotion.get(i);
-                if (mPreferences.getBoolean("hrm_use", true) && i < mSleepHR.size()) {
-                    DataPoint h = mSleepHR.get(i);
-                    csv.append(d.getX()).append(",").append(d.getY())
-                               .append(",").append(h.getY()).append("\n");
+            for (int i = 0; i < mSleepData.getDataLength(); i++) {
+                double t = mSleepData.getTimeAt(i);
+                double m = mSleepData.getMotionAt(i);
+                if (mPreferences.getBoolean("hrm_use", true)) {
+                    double h = mSleepData.getHRAt(i);
+                    csv.append(t).append(",").append(m).append(",").append(h).append("\n");
                 } else {
-                    csv.append(d.getX()).append(",").append(d.getY()).append("\n");
+                    csv.append(t).append(",").append(m).append("\n");
                 }
             }
 
@@ -617,14 +499,14 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         }
         mPaused = false;
 
-        if(mSleepMotion.size() > 0) {
+        if(mSleepData.getDataLength() > 0) {
             //Auto export?
             if (mPreferences.getBoolean("auto_export", true)) {
                 exportData();
             }
 
             //Proccess sleep data
-            new SleepProcessor().execute(mSleepMotion);
+            new SleepProcessor().execute(mSleepData);
         }
 
         //Stop service (from user perspective)
@@ -633,23 +515,9 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     public void reset(){
         //Empty offline store and mAccelData etc
-        try{
-            //List<DataPoint> emptyList = new ArrayList<>();
-            final BufferedWriter DataStore = new BufferedWriter(new OutputStreamWriter(openFileOutput(OFFLINE_ACC, 0)));
-            DataStore.close();
-
-            final BufferedWriter DataStore2 = new BufferedWriter(new OutputStreamWriter(openFileOutput(OFFLINE_HRM, 0)));
-            DataStore2.close();
-
-        }catch(IOException e){
-            Log.d(TAG, "Failed to reset");
-        }
-
-        mSleepMotion = new ArrayList<>();
-        mSleepHR = new ArrayList<>();
+        mSleepData.reset();
         mAccelData = false;
-        mAccelMax = 0.0;
-        mHRMax = 0.0;
+
     }
 
     public void configureAlarm(){

@@ -18,7 +18,7 @@ public class SleepSummaryListActivity extends WearableActivity {
     private static final String TAG = SleepSummaryListActivity.class.getSimpleName();
     private WearableRecyclerView mWearableRecyclerView;
 
-    private SleepDataAdapter mAdapter;
+    private SleepSummaryDataAdapter mAdapter;
 
     private List<String> mSleepFiles;
     private WearableLinearLayoutManager mLayoutManager;
@@ -44,7 +44,7 @@ public class SleepSummaryListActivity extends WearableActivity {
         }
         Collections.reverse(mSleepFiles);
 
-        mAdapter = new SleepDataAdapter(this, mSleepFiles);
+        mAdapter = new SleepSummaryDataAdapter(this, mSleepFiles);
         mLayoutManager = new WearableLinearLayoutManager(this, new CurvingLayoutCallback(this));
         //mLayoutManager.setReverseLayout(true);
         mWearableRecyclerView.setLayoutManager(mLayoutManager);

@@ -1,14 +1,11 @@
 package com.fridgecow.smartalarm;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.support.wear.widget.WearableRecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.List;
@@ -17,13 +14,13 @@ import java.util.List;
  * Created by tom on 04/01/18.
  */
 
-public class SleepDataAdapter extends WearableRecyclerView.Adapter<SleepDataAdapter.SleepViewHolder> {
+public class SleepSummaryDataAdapter extends WearableRecyclerView.Adapter<SleepSummaryDataAdapter.SleepViewHolder> {
 
     private final List<String> mData;
     private Activity mContext;
 
     public class SleepViewHolder extends WearableRecyclerView.ViewHolder {
-        private SleepData mData;
+        private SleepSummaryData mData;
         private String mFileName;
         private Activity mContext;
         private SleepView mView;
@@ -37,7 +34,7 @@ public class SleepDataAdapter extends WearableRecyclerView.Adapter<SleepDataAdap
                 @Override
                 public void onClick(View view) {
                     if(mData != null) {
-                        Log.d("SleepDataAdapter", "Item tapped");
+                        Log.d("SleepSummaryDataAdapter", "Item tapped");
 
                         Intent myIntent = SleepSummaryActivity.createIntent(
                                 view.getContext(),
@@ -52,7 +49,7 @@ public class SleepDataAdapter extends WearableRecyclerView.Adapter<SleepDataAdap
         public void attachSleepData(String filename){
             mFileName = filename;
             try{
-                mData = new SleepData(mContext, filename);
+                mData = new SleepSummaryData(mContext, filename);
                 mView.attachSleepData(mData);
             }catch(IOException e){
                 Log.d("SleepViewHolder", "Unable to open sleepdata, deleting it");
@@ -66,7 +63,7 @@ public class SleepDataAdapter extends WearableRecyclerView.Adapter<SleepDataAdap
         }
     }
 
-    public SleepDataAdapter(Activity context, List<String> sleepDataFilesList) {
+    public SleepSummaryDataAdapter(Activity context, List<String> sleepDataFilesList) {
         mContext = context;
         mData = sleepDataFilesList;
     }
