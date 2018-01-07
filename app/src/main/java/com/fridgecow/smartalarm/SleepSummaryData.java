@@ -49,7 +49,7 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
         //https://github.com/fridgecow/smartalarm/wiki/Sleep-Detection
 
         boolean sleeping = false;
-        double lastTime = 0;
+        double lastTime = getStart();
         for(double i = getStart(); i < getEnd(); i += SleepData.STEPMILLIS){
             if(data.getSleepingAt(i)) { //Sleep
                 Log.d(TAG, "Sleeping at time "+i);
@@ -120,6 +120,7 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
 
         in.close();
     }
+
     public double getStart() {
         return mStart;
     }

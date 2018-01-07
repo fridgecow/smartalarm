@@ -208,7 +208,7 @@ public class SleepData {
                 double lowerTime = list.get(lower).getX(), upperTime = list.get(upper).getX();
                 double ratio = (target - lowerTime) / (upperTime - lowerTime);
 
-                Log.d(TAG, "ratio: "+ratio+", got motion: "+((1 - ratio)*list.get(lower).getY() + (ratio)*list.get(upper).getY()));
+                //Log.d(TAG, "ratio: "+ratio+", got motion: "+((1 - ratio)*list.get(lower).getY() + (ratio)*list.get(upper).getY()));
 
                 return (1 - ratio)*list.get(lower).getY() + (ratio)*list.get(upper).getY();
             }else{
