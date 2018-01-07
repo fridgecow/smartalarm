@@ -309,11 +309,11 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     /* Class API */
 
     public DataPoint[] getSleepMotion(){
-        return mSleepData.getSleepMotion().toArray(new DataPoint[mSleepData.getDataLength()]);
+        return mSleepData.getSleepMotionArray();
     }
 
     public DataPoint[] getSleepHR(){
-        return mSleepData.getSleepHR().toArray(new DataPoint[mSleepData.getDataLength()]);
+        return mSleepData.getSleepHRArray();
     }
 
     public void exportData() {
@@ -402,6 +402,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 reset();
             }
             mPaused = false;
+            mSleeping = false;
 
             //Register sensors
             mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -415,8 +416,6 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                     accel,
                     accPoll
             );
-            Log.d(TAG, "Acc Polling Rate "+accPoll);
-
 
             if(mPreferences.getBoolean("hrm_use", true)) {
                 Log.d(TAG, "Using HRM");

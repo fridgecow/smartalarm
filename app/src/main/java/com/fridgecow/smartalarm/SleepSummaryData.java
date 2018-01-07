@@ -18,7 +18,9 @@ import java.util.List;
 
 public class SleepSummaryData extends ArrayList<DataRegion> implements Serializable{
     public static final String WAKEREGION = "wakeful";
+
     private static final String TAG = SleepSummaryData.class.getSimpleName();
+
     private double mStart;
     private double mEnd;
 
@@ -47,22 +49,24 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
         //https://github.com/fridgecow/smartalarm/wiki/Sleep-Detection
 
         boolean sleeping = false;
-        int lastIndex = 0;
-        for(int i = 0; i < data.getDataLength(); i++){
+        double lastTime = 0;
+        for(double i = getStart(); i < getEnd(); i += SleepData.STEPMILLIS){
             if(data.getSleepingAt(i)) { //Sleep
+                Log.d(TAG, "Sleeping at time "+i);
                 if(!sleeping){
                     //End a region
                     add(new DataRegion(
-                            data.getTimeAt(lastIndex),
-                            data.getTimeAt(i-1),
+                            lastTime,
+                            i - SleepData.STEPMILLIS,
                             SleepSummaryData.WAKEREGION
                     ));
                     sleeping = true;
                 }
             }else { //Wakefulness
+                Log.d(TAG, "Wakeful at time "+i);
                 if(sleeping){
                     //Start a region
-                    lastIndex = i;
+                    lastTime = i;
                     sleeping = false;
                 }
             }
@@ -71,7 +75,7 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
         //Deal with last section
         if(!sleeping){
             add(new DataRegion(
-                    data.getTimeAt(lastIndex),
+                    lastTime,
                     data.getTimeAt(data.getDataLength()-1),
                     SleepSummaryData.WAKEREGION
             ));

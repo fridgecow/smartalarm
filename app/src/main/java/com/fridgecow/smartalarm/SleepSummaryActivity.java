@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.wearable.activity.WearableActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -71,6 +72,8 @@ public class SleepSummaryActivity extends WearableActivity {
         for(DataRegion d : mData){
             if(d.getLabel().equals(SleepSummaryData.WAKEREGION)){
                 wakeTime += d.getEnd() - d.getStart();
+                Log.d("SleepSummaryActivity", "Region Start: "+(new Date((long)d.getStart()))
+                +" Region End: "+(new Date((long)d.getEnd())));
             }
         }
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.US);

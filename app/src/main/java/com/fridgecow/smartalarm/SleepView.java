@@ -130,8 +130,8 @@ public class SleepView extends View {
 
             for(DataRegion d : mSleepData){
                 if(d.getLabel().equals(SleepSummaryData.WAKEREGION)){
-                    final float regionLeft = left + ((float) (d.getStart() - start)*pixelScale);
-                    final float regionRight = left + ((float) (d.getEnd() - start)*pixelScale);
+                    final float regionLeft = Math.max(left, left + ((float) (d.getStart() - start)*pixelScale));
+                    final float regionRight = Math.max(regionLeft, left + ((float) (d.getEnd() - start)*pixelScale));
 
                     canvas.drawRect(regionLeft, tickerTop, regionRight, tickerBottom, mForegroundPaint);
                 }

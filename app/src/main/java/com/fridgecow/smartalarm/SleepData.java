@@ -15,6 +15,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -26,6 +27,7 @@ public class SleepData {
     private static final String OFFLINE_ACC = "sleepdata.csv";
     private static final String OFFLINE_HRM = "sleephrm.csv";
 
+    public static final int STEPMILLIS = 60000;
     private final double P = 0.001;
     private final double[] W = {106.0, 54.0, 58.0, 76.0, 230.0, 74.0, 67.0};
 
@@ -35,11 +37,14 @@ public class SleepData {
     private List<DataPoint> mSleepMotion;
     private List<DataPoint> mSleepHR;
 
+
     //For accelerometer
     private double mAccelMax = 0.0;
+    private boolean mAccelDirty = false;
 
     //For HR
     private double mHRMax = 0.0;
+    private boolean mHRDirty = false;
 
     public SleepData(Context context){
         mContext = context;
@@ -53,9 +58,11 @@ public class SleepData {
         mAccelMax = 0.0;
         mHRMax = 0.0;
 
+        mAccelDirty = false;
+        mHRDirty = false;
+
         //Empty offline store and mAccelData etc
         try{
-            //List<DataPoint> emptyList = new ArrayList<>();
             final BufferedWriter DataStore = new BufferedWriter(new OutputStreamWriter(mContext.openFileOutput(OFFLINE_ACC, 0)));
             DataStore.close();
 
@@ -122,40 +129,108 @@ public class SleepData {
         if(accel > mAccelMax){
             mAccelMax = accel;
         }
+        mAccelDirty = true;
     }
 
     public void recordHRSensor(double hr){
         if(hr > mHRMax){
             mHRMax = hr;
         }
+        mHRDirty = true;
     }
 
     public void recordPoint(){
         long time = System.currentTimeMillis();
 
-        mSleepMotion.add(new DataPoint(time, mAccelMax));
-        mSleepHR.add(new DataPoint(time, mHRMax));
+        if(mAccelDirty) {
+            mSleepMotion.add(new DataPoint(time, mAccelMax));
+        }
+
+        if(mHRDirty) {
+            mSleepHR.add(new DataPoint(time, mHRMax));
+        }
 
         Log.d(TAG, "Max Acc: " + mAccelMax + ", HR: "+mHRMax);
         mAccelMax = 0.0;
         mHRMax = 0.0;
+        mAccelDirty = false;
+        mHRDirty = false;
     }
 
     public List<DataPoint> getSleepMotion(){
         return mSleepMotion;
     }
 
+    public DataPoint[] getSleepMotionArray(){
+        return mSleepMotion.toArray(new DataPoint[mSleepMotion.size()]);
+    }
+
     public List<DataPoint> getSleepHR(){
         return mSleepHR;
     }
 
+    public DataPoint[] getSleepHRArray(){
+        return mSleepHR.toArray(new DataPoint[mSleepHR.size()]);
+    }
     public double getMotionAt(int index){
-        return mSleepMotion.get(index).getX();
+        if(index < mSleepMotion.size()) {
+            return mSleepMotion.get(index).getY();
+        }else{
+            return 0;
+        }
+    }
+
+    private int binaryTimeSearch(List<DataPoint> list, double target){
+        //Do a binary search on list to find the lower index where the target time lies
+        int lower = 0, upper = list.size()-1;
+        while(upper - lower > 1){
+            int trial = (lower + upper)/2;
+            //Log.d(TAG, "list["+lower+"] < "+(new Date((long)target))+" < list["+upper+"] - trying "+trial);
+            if(list.get(trial).getX() < target){
+                lower = trial;
+            }else if(list.get(trial).getX() > target){
+                upper = trial;
+            }else{
+                //Log.d(TAG, "Found exact "+trial);
+                return trial;
+            }
+        }
+        //Log.d(TAG, "Returning "+lower);
+        return lower;
+    }
+
+    private double interpolateListFromTime(List<DataPoint> list, double target){
+        if(target >= list.get(0).getX() && target <= list.get(list.size()-1).getX()) {
+            int lower = binaryTimeSearch(list, target);
+            int upper = lower + 1;
+
+            if(upper < list.size()) {
+                double lowerTime = list.get(lower).getX(), upperTime = list.get(upper).getX();
+                double ratio = (target - lowerTime) / (upperTime - lowerTime);
+
+                Log.d(TAG, "ratio: "+ratio+", got motion: "+((1 - ratio)*list.get(lower).getY() + (ratio)*list.get(upper).getY()));
+
+                return (1 - ratio)*list.get(lower).getY() + (ratio)*list.get(upper).getY();
+            }else{
+                return list.get(lower).getY();
+            }
+        }else{
+            Log.d(TAG, "Time to interpolate outside of range");
+            return 0;
+        }
+    }
+
+    public double getMotionAt(double time){
+        return interpolateListFromTime(mSleepMotion, time);
+    }
+
+    public double getHRAt(double time){
+        return interpolateListFromTime(mSleepHR, time);
     }
 
     public double getHRAt(int index) {
         if (index < mSleepHR.size()){
-            return mSleepHR.get(index).getX();
+            return mSleepHR.get(index).getY();
         }else{
             return 0.0;
         }
@@ -182,22 +257,29 @@ public class SleepData {
     }
 
     public double getEnd(){
-        return mSleepMotion.get(mSleepMotion.size()).getX();
+        return mSleepMotion.get(mSleepMotion.size()-1).getX();
     }
 
     public boolean getSleepingAt(int index){
-        if(getDataLength() < 7){
-            return false; //Not enough data yet - guess wakeful
+        return getSleepingAt(getTimeAt(index));
+    }
+
+    public boolean getSleepingAt(double time){
+        if(getDataLength() < 5){
+            return false; //Not enough data yet - guess "awake"
         }
 
         double D = 0;
         for(int j = 0; j < W.length; j++){
             //Ensure index is in range - if out of range, duplicate data
-            int i = Math.max(Math.min(index+j-4, mSleepMotion.size()-1), 0);
-            double a = Math.min(mSleepMotion.get(i).getY(), 300); //Cap at 300
+            double t = Math.max(Math.min(time+(j-4)*STEPMILLIS, getEnd()), getStart());
+            double a = Math.min(getMotionAt(t), 300); //Cap at 300
+
             D += a*W[j];
         }
         D *= P;
+
+        Log.d(TAG, "At time "+(new Date((long) time))+" D="+D);
 
         return D < 1;
     }
