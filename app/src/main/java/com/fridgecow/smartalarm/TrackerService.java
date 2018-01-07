@@ -107,7 +107,6 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     private SharedPreferences.OnSharedPreferenceChangeListener mPreferenceListener;
 
     private class SleepProcessor extends AsyncTask<List<DataPoint>, Integer, SleepData>{
-
         //Actigraphy constants - make these configurable!
         private final double P = 0.001;
         private final double[] W = {106.0, 54.0, 58.0, 76.0, 230.0, 74.0, 67.0};
