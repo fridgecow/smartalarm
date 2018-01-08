@@ -283,4 +283,27 @@ public class SleepData {
 
         return D < 1;
     }
+
+    public String getCSV(boolean useHRM){
+        //Loop through datapoints to get CSV data
+        StringBuilder csv = new StringBuilder("Unix Time,Motion,Heart Rate\n");
+        for (int i = 0; i < getDataLength(); i++) {
+            long t = (long) getTimeAt(i);
+            double m = getMotionAt(i);
+            if (useHRM) {
+                double h;
+                if(mSleepHR.size() < mSleepMotion.size()){
+                    //Find the HR for this time
+                    h = getHRAt(t);
+                }else {
+                    //Simply get it from the index
+                    h = getHRAt(i);
+                }
+                csv.append(t).append(",").append(m).append(",").append(h).append("\n");
+            } else {
+                csv.append(t).append(",").append(m).append("\n");
+            }
+        }
+        return csv.toString();
+    }
 }

@@ -71,9 +71,7 @@ public class SleepSummaryActivity extends WearableActivity {
         double wakeTime = 0;
         for(DataRegion d : mData){
             if(d.getLabel().equals(SleepSummaryData.WAKEREGION)){
-                wakeTime += d.getEnd() - d.getStart();
-                Log.d("SleepSummaryActivity", "Region Start: "+(new Date((long)d.getStart()))
-                +" Region End: "+(new Date((long)d.getEnd())));
+                wakeTime += Math.min(d.getEnd(), mData.getEnd()) - Math.max(d.getStart(), mData.getStart());
             }
         }
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.US);
@@ -90,8 +88,12 @@ public class SleepSummaryActivity extends WearableActivity {
         double smartWakeTime = wakeTime
                 - (mData.get(mData.size()-1).getEnd() - mData.get(mData.size()-1).getStart())
                 - (mData.get(0).getEnd() - mData.get(0).getStart());
-        currentMetric.setText(Math.round(1000 - smartWakeTime*1000/smartTime)/10.0 + "%");
-
+        double fslwEfficiency = Math.round(1000 - smartWakeTime*1000/smartTime)/10.0;
+        if(fslwEfficiency > 100 || fslwEfficiency < 0){
+            currentMetric.setText("N/A");
+        }else {
+            currentMetric.setText(fslwEfficiency+"%");
+        }
         currentMetric = findViewById(R.id.detectedwaketime);
         Date wakeDate = new Date((long) mData.get(mData.size() - 1).getStart());
         currentMetric.setText(timeFormat.format(wakeDate));

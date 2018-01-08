@@ -158,8 +158,6 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
         //Fill SleepMotion
         try {
-            //readData(OFFLINE_ACC, mSleepMotion);
-            //readData(OFFLINE_HRM, mSleepHR);
             mSleepData.readIn();
         }catch(IOException e){
             Log.d(TAG, "Problem reading offline store");
@@ -326,20 +324,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
             params.put("email", email);
 
-            //Loop through datapoints to get CSV data
-            StringBuilder csv = new StringBuilder("Unix Time,Motion,Heart Rate\n");
-            for (int i = 0; i < mSleepData.getDataLength(); i++) {
-                double t = mSleepData.getTimeAt(i);
-                double m = mSleepData.getMotionAt(i);
-                if (mPreferences.getBoolean("hrm_use", true)) {
-                    double h = mSleepData.getHRAt(i);
-                    csv.append(t).append(",").append(m).append(",").append(h).append("\n");
-                } else {
-                    csv.append(t).append(",").append(m).append("\n");
-                }
-            }
-
-            params.put("csv", csv.toString());
+            params.put("csv", mSleepData.getCSV(mPreferences.getBoolean("hrm_use", true)));
 
             //Put TimeZone so that server knows how to interpret UTC
             params.put("tz", TimeZone.getDefault().getID());
