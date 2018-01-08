@@ -3,6 +3,8 @@ package com.fridgecow.smartalarm;
 import android.content.Context;
 import android.util.Log;
 
+import com.jjoe64.graphview.series.DataPoint;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -10,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -18,6 +21,7 @@ import java.util.List;
 
 public class SleepSummaryData extends ArrayList<DataRegion> implements Serializable{
     public static final String WAKEREGION = "wakeful";
+    public static final String REMREGION = "rem";
 
     private static final String TAG = SleepSummaryData.class.getSimpleName();
 
@@ -38,6 +42,17 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
         mEnd = end;
     }
 
+    private double maxintime(List<DataPoint> list, double start, double end){
+        double max = list.get(0).getY();
+        for(DataPoint d : list){
+            if(d.getX() >= start && d.getX() <= end){
+                if(max < d.getY()){
+                    max = d.getY();
+                }
+            }
+        }
+        return max;
+    }
     public SleepSummaryData(SleepData data){
         super();
 
@@ -48,6 +63,30 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
         //Do actigraphy algorithm
         //https://github.com/fridgecow/smartalarm/wiki/Sleep-Detection
 
+        //Try to detect REM by estimating HRV
+        double HRVthresh = 0;
+        List<DataPoint> HRV = null;
+        if(data.hasHRData()) {
+            HRV = new ArrayList<>();
+            List<Double> HRVfilter = new ArrayList<>();
+            List<DataPoint> HRLowPass = data.getLowpassHR(0.15);
+            for (int i = 0; i < HRLowPass.size(); i++) {
+                final double lp = HRLowPass.get(i).getY();
+                final double hr = data.getHRAt(i);
+                final double hrv = Math.abs(lp - hr);
+                HRV.add(new DataPoint(HRLowPass.get(i).getX(), hrv));
+
+                if (hrv > 18) {
+                    HRVfilter.add(hrv);
+                }
+            }
+
+            Collections.sort(HRVfilter);
+            HRVthresh = HRVfilter.get((int) (0.8 * HRVfilter.size()));
+        }
+
+
+        //Wrist actigraphy
         boolean sleeping = false;
         double lastTime = getStart();
         for(double i = getStart(); i < getEnd(); i += SleepData.STEPMILLIS){
@@ -55,11 +94,19 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
                 Log.d(TAG, "Sleeping at time "+i);
                 if(!sleeping){
                     //End a region
-                    add(new DataRegion(
-                            lastTime,
-                            i - SleepData.STEPMILLIS,
-                            SleepSummaryData.WAKEREGION
-                    ));
+                    if(!data.hasHRData() || maxintime(HRV, lastTime, i - SleepData.STEPMILLIS) < HRVthresh) {
+                        add(new DataRegion(
+                                lastTime,
+                                i - SleepData.STEPMILLIS,
+                                WAKEREGION
+                        ));
+                    }else{
+                        add(new DataRegion(
+                                lastTime,
+                                i - SleepData.STEPMILLIS,
+                                REMREGION
+                        ));
+                    }
                     sleeping = true;
                 }
             }else { //Wakefulness
@@ -77,7 +124,7 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
             add(new DataRegion(
                     lastTime,
                     data.getTimeAt(data.getDataLength()-1),
-                    SleepSummaryData.WAKEREGION
+                    WAKEREGION
             ));
         }
     }

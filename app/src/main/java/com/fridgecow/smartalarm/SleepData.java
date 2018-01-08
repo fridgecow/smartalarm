@@ -248,6 +248,14 @@ public class SleepData {
         return tot / mSleepMotion.size();
     }
 
+    public double getHRMean(){
+        double tot = 0;
+        for(DataPoint d : mSleepHR){
+            tot += d.getY();
+        }
+        return tot / mSleepHR.size();
+    }
+
     public int getDataLength(){
         return mSleepMotion.size();
     }
@@ -305,5 +313,19 @@ public class SleepData {
             }
         }
         return csv.toString();
+    }
+
+    public List<DataPoint> getLowpassHR(double alpha){
+        List<DataPoint> ret = new ArrayList<>();
+        double state = getHRMean();
+        for(DataPoint d : mSleepHR){
+            state += alpha*(d.getY() - state);
+            ret.add(new DataPoint(d.getX(), state));
+        }
+        return ret;
+    }
+
+    public boolean hasHRData(){
+        return mSleepHR.size() > 0;
     }
 }

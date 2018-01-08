@@ -23,7 +23,8 @@ public class SleepView extends View {
 
     //Things for drawing
     private Paint mBackgroundPaint;
-    private Paint mForegroundPaint;
+    private Paint mLightPaint;
+    private Paint mREMPaint;
     private TextPaint mTextPaint;
 
     private String mDateLabel;
@@ -95,11 +96,13 @@ public class SleepView extends View {
 
     private void init(Context context){
         mBackgroundPaint = new Paint();
-        mForegroundPaint = new Paint();
+        mLightPaint = new Paint();
+        mREMPaint = new Paint();
         mTextPaint = new TextPaint();
 
         mBackgroundPaint.setColor(Color.GRAY);
-        mForegroundPaint.setColor(Color.WHITE);
+        mLightPaint.setColor(Color.WHITE);
+        mREMPaint.setColor(Color.rgb(255, 238, 178));
         mTextPaint.setColor(Color.WHITE);
 
         mTextPaint.setTextSize(20);
@@ -129,11 +132,13 @@ public class SleepView extends View {
             final float pixelScale = contentWidth/sleepLength;
 
             for(DataRegion d : mSleepData){
-                if(d.getLabel().equals(SleepSummaryData.WAKEREGION)){
-                    final float regionLeft = Math.max(left, left + ((float) (d.getStart() - start)*pixelScale));
-                    final float regionRight = Math.max(regionLeft, left + ((float) (d.getEnd() - start)*pixelScale));
+                final float regionLeft = Math.max(left, left + ((float) (d.getStart() - start)*pixelScale));
+                final float regionRight = Math.max(regionLeft, left + ((float) (d.getEnd() - start)*pixelScale));
 
-                    canvas.drawRect(regionLeft, tickerTop, regionRight, tickerBottom, mForegroundPaint);
+                if(d.getLabel().equals(SleepSummaryData.WAKEREGION)){
+                    canvas.drawRect(regionLeft, tickerTop, regionRight, tickerBottom, mLightPaint);
+                }else if(d.getLabel().equals(SleepSummaryData.REMREGION)){
+                    canvas.drawRect(regionLeft, tickerTop, regionRight, tickerBottom, mREMPaint);
                 }
             }
 
