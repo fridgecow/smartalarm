@@ -185,17 +185,14 @@ public class SleepData {
         int lower = 0, upper = list.size()-1;
         while(upper - lower > 1){
             int trial = (lower + upper)/2;
-            //Log.d(TAG, "list["+lower+"] < "+(new Date((long)target))+" < list["+upper+"] - trying "+trial);
             if(list.get(trial).getX() < target){
                 lower = trial;
             }else if(list.get(trial).getX() > target){
                 upper = trial;
             }else{
-                //Log.d(TAG, "Found exact "+trial);
                 return trial;
             }
         }
-        //Log.d(TAG, "Returning "+lower);
         return lower;
     }
 
@@ -294,7 +291,12 @@ public class SleepData {
 
     public String getCSV(boolean useHRM){
         //Loop through datapoints to get CSV data
-        StringBuilder csv = new StringBuilder("Unix Time,Motion,Heart Rate\n");
+        StringBuilder csv;
+        if(useHRM){
+            csv =new StringBuilder("Unix Time,Motion,Heart Rate\n");
+        }else{
+            csv = new StringBuilder("Unix Time,Motion\n");
+        }
         for (int i = 0; i < getDataLength(); i++) {
             long t = (long) getTimeAt(i);
             double m = getMotionAt(i);

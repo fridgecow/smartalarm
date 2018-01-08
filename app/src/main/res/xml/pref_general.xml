@@ -120,6 +120,16 @@
                 android:defaultValue="true"
                 />
 
+            <SwitchPreference
+                android:key="hrm_smart"
+                android:title="@string/hrm_smart_title"
+                android:summaryOn="@string/hrm_summary_on"
+                android:summaryOff="@string/hrm_summary_off"
+                app:wear_iconOn="@drawable/ic_check_white"
+                app:wear_iconOff="@drawable/ic_cross_white"
+                android:defaultValue="true"
+                />
+
             <ListPreference
                 android:key="hrm_polling_rate"
                 android:title="@string/hrm_polling_rate_title"

@@ -97,6 +97,10 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     private SleepData mSleepData;
 
+    private int mHRPointsSinceTracked = 0;
+    private int mHRPointsToTrack = 0;
+    private boolean mHRJustTurnedOn;
+
     private NotificationCompat.Builder mNotification;
     private NotificationManager mNotificationManager;
     private RequestQueue mQueue;
@@ -179,6 +183,33 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         mPreferences.registerOnSharedPreferenceChangeListener(mPreferenceListener);
     }
 
+    private void recordHRFor(int points) {
+        Log.d(TAG, "Tracking HR for " + points + " points");
+
+        mHRPointsToTrack = points;
+        mHRPointsSinceTracked = 0;
+        mHRJustTurnedOn = true;
+
+        //Register sensor
+        if (mPreferences.getBoolean("hrm_use", true)) {
+            Sensor hr = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
+            int hrmPoll = Integer.parseInt(mPreferences.getString("hrm_polling_rate", "3"));
+            mSensorManager.registerListener(
+                    this,
+                    hr,
+                    hrmPoll
+            );
+        }
+    }
+
+    private void stopHRRecord(){
+        //De-register sensor
+        Log.d(TAG, "Stopped tracking HR");
+
+        Sensor hr = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
+        mSensorManager.unregisterListener(this, hr);
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent == null || intent.getStringExtra("task") == null) {
@@ -186,17 +217,50 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 if(mAccelData) {
                     mSleepData.recordPoint();
 
+                    //Deal with Smart HR tracking
+                    if(mPreferences.getBoolean("hrm_smart", true)){
+                        if(mHRPointsToTrack > 0){
+                            mHRPointsToTrack--;
+                            mHRJustTurnedOn = false;
+
+                            if(mHRPointsToTrack == 0){
+                                stopHRRecord();
+                            }
+                        }
+
+                        mHRPointsSinceTracked++;
+                        Log.d(TAG, mHRPointsSinceTracked+" points since HR tracked");
+
+                        if(mHRPointsSinceTracked >= 10){
+                            if(!mSleeping){ //Interesting times - track every 10 minutes for 5 minutes
+                                recordHRFor(5);
+                            }else{ //Track every 10 minutes for 1 minute
+                                recordHRFor(5);
+                            }
+                        }
+                    }
+
                     //Check if sleeping
                     if(mSleepData.getSleepingAt(mSleepData.getDataLength()-1)){
                         if(!mSleeping){
                             mSleeping = true;
                             triggerIFTTT(TRIGGER_ASLEEP);
                             mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("You're asleep!").build());
+
+                            //Record for 2 minutes
+                            if(mPreferences.getBoolean("hrm_smart", true)){
+                                recordHRFor(2);
+                            }
                         }
                     }else if(mSleeping){
                         mSleeping = false;
                         mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Good morning!").build());
                         triggerIFTTT(TRIGGER_AWAKE);
+
+                        //Record for 2 minutes
+                        if(mPreferences.getBoolean("hrm_smart", true)){
+                            recordHRFor(2);
+                        }
                     }
 
                     //If smart alarm, check if "light sleep"
@@ -282,8 +346,10 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 mAccelData = true;
             }
         }else if(event.sensor.getType() == Sensor.TYPE_HEART_RATE){
-            //Collect HR info
-            mSleepData.recordHRSensor(event.values[0]);
+            if(!mHRJustTurnedOn) {
+                //Collect HR info
+                mSleepData.recordHRSensor(event.values[0]);
+            }
         }
     }
 
@@ -410,12 +476,18 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                         Manifest.permission.BODY_SENSORS);
 
                 if(permissionCheck == PackageManager.PERMISSION_GRANTED){
-                    int hrmPoll = Integer.parseInt(mPreferences.getString("acc_polling_rate", "3"));
-                    mSensorManager.registerListener(
-                            this,
-                            hr,
-                            hrmPoll
-                    );
+                    if(!mPreferences.getBoolean("hrm_smart", true)) {
+                        //Register the sensor unconditionally
+                        int hrmPoll = Integer.parseInt(mPreferences.getString("hrm_polling_rate", "3"));
+                        mSensorManager.registerListener(
+                                this,
+                                hr,
+                                hrmPoll
+                        );
+                    }else{
+                        //Get some initial data
+                        recordHRFor(3);
+                    }
                 }
             }
 
