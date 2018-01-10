@@ -36,6 +36,7 @@ public class SleepData {
     //Stores long-term tracking data
     private List<DataPoint> mSleepMotion;
     private List<DataPoint> mSleepHR;
+    private List<DataPoint> mSleepSDNN;
 
 
     //For accelerometer
@@ -45,6 +46,9 @@ public class SleepData {
     //For HR
     private double mHRMax = 0.0;
     private boolean mHRDirty = false;
+    private double mNNtotal = 0.0;
+    private double mNNsum = 0.0;
+    private double mNNsqsum = 0.0;
 
     public SleepData(Context context){
         mContext = context;
@@ -54,9 +58,14 @@ public class SleepData {
     public void reset(){
         mSleepHR = new ArrayList<>();
         mSleepMotion = new ArrayList<>();
+        mSleepSDNN = new ArrayList<>();
 
         mAccelMax = 0.0;
         mHRMax = 0.0;
+
+        mNNtotal = 0;
+        mNNsum = 0;
+        mNNsqsum = 0;
 
         mAccelDirty = false;
         mHRDirty = false;
@@ -122,7 +131,7 @@ public class SleepData {
 
     public void recordSensor(double accel, double hr){
         recordAccelSensor(accel);
-        recordHRSensor(hr);
+        recordHRSensor(hr, false);
     }
 
     public void recordAccelSensor(double accel){
@@ -132,11 +141,23 @@ public class SleepData {
         mAccelDirty = true;
     }
 
-    public void recordHRSensor(double hr){
+    public void recordHRSensor(double hr, boolean guessHRV){
         if(hr > mHRMax){
             mHRMax = hr;
         }
         mHRDirty = true;
+
+        if(guessHRV){
+            double NN = (60 / hr);
+
+            mNNtotal += 1;
+            mNNsum += NN;
+            mNNsqsum += NN*NN;
+        }
+    }
+
+    public void recordHBSensor(double hb){
+        Log.d(TAG, "Heart Beat "+hb+" "+System.currentTimeMillis());
     }
 
     public void recordPoint(){
@@ -146,13 +167,19 @@ public class SleepData {
             mSleepMotion.add(new DataPoint(time, mAccelMax));
         }
 
+        double SDNN = 0;
         if(mHRDirty) {
             mSleepHR.add(new DataPoint(time, mHRMax));
+            SDNN = Math.sqrt((mNNtotal*mNNsqsum - mNNsum*mNNsum)/(mNNtotal*(mNNtotal-1)));
+            mSleepSDNN.add(new DataPoint(time, SDNN));
         }
 
-        Log.d(TAG, "Max Acc: " + mAccelMax + ", HR: "+mHRMax);
+        Log.d(TAG, "Max Acc: " + mAccelMax + ", HR: "+mHRMax+" SDNN: "+SDNN);
         mAccelMax = 0.0;
         mHRMax = 0.0;
+        mNNsum = 0;
+        mNNsqsum = 0;
+        mNNtotal = 0;
         mAccelDirty = false;
         mHRDirty = false;
     }
@@ -233,6 +260,10 @@ public class SleepData {
         }
     }
 
+    public double getSDNNAt(double time){
+        return interpolateListFromTime(mSleepSDNN, time);
+    }
+
     public double getTimeAt(int index){
         return mSleepMotion.get(index).getX();
     }
@@ -293,7 +324,7 @@ public class SleepData {
         //Loop through datapoints to get CSV data
         StringBuilder csv;
         if(useHRM){
-            csv =new StringBuilder("Unix Time,Motion,Heart Rate\n");
+            csv =new StringBuilder("Unix Time,Motion,Heart Rate, SDNN\n");
         }else{
             csv = new StringBuilder("Unix Time,Motion\n");
         }
@@ -301,7 +332,7 @@ public class SleepData {
             long t = (long) getTimeAt(i);
             double m = getMotionAt(i);
             if (useHRM) {
-                double h;
+                double h, n;
                 if(mSleepHR.size() < mSleepMotion.size()){
                     //Find the HR for this time
                     h = getHRAt(t);
@@ -309,7 +340,8 @@ public class SleepData {
                     //Simply get it from the index
                     h = getHRAt(i);
                 }
-                csv.append(t).append(",").append(m).append(",").append(h).append("\n");
+                n = getSDNNAt(t);
+                csv.append(t).append(",").append(m).append(",").append(h).append(",").append(n).append("\n");
             } else {
                 csv.append(t).append(",").append(m).append("\n");
             }
@@ -329,5 +361,13 @@ public class SleepData {
 
     public boolean hasHRData(){
         return mSleepHR.size() > 0;
+    }
+
+    public boolean hasSDNNData() {
+        return mSleepSDNN.size() > 0;
+    }
+
+    public List<DataPoint> getSDNN(){
+        return mSleepSDNN;
     }
 }

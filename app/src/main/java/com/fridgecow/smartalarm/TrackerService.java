@@ -184,15 +184,19 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     }
 
     private void recordHRFor(int points) {
-        Log.d(TAG, "Tracking HR for " + points + " points");
-
-        mHRPointsToTrack = points;
-        mHRPointsSinceTracked = 0;
-        mHRJustTurnedOn = true;
+        if(mHRPointsToTrack == 0) {
+            mHRPointsToTrack = points;
+            mHRPointsSinceTracked = 0;
+            mHRJustTurnedOn = true;
+        }else{
+            mHRPointsToTrack = Math.max(mHRPointsToTrack, points);
+        }
 
         //Register sensor
         if (mPreferences.getBoolean("hrm_use", true)) {
+            Log.d(TAG, "Tracking HR for " + points + " points");
             Sensor hr = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
+
             int hrmPoll = Integer.parseInt(mPreferences.getString("hrm_polling_rate", "3"));
             mSensorManager.registerListener(
                     this,
@@ -348,7 +352,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         }else if(event.sensor.getType() == Sensor.TYPE_HEART_RATE){
             if(!mHRJustTurnedOn) {
                 //Collect HR info
-                mSleepData.recordHRSensor(event.values[0]);
+                mSleepData.recordHRSensor(event.values[0], mPreferences.getBoolean("hrm_smart", true));
             }
         }
     }

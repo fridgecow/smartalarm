@@ -67,23 +67,27 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
         double HRVthresh = 0;
         List<DataPoint> HRV = null;
         if(data.hasHRData()) {
-            HRV = new ArrayList<>();
-            List<Double> HRVfilter = new ArrayList<>();
-            List<DataPoint> HRLowPass = data.getLowpassHR(0.15);
-            for (int i = 0; i < HRLowPass.size(); i++) {
-                final double lp = HRLowPass.get(i).getY();
-                final double hr = data.getHRAt(i);
-                final double hrv = Math.abs(lp - hr);
-                HRV.add(new DataPoint(HRLowPass.get(i).getX(), hrv));
+            if(!data.hasSDNNData()) {
+                HRV = new ArrayList<>();
+                List<Double> HRVfilter = new ArrayList<>();
+                List<DataPoint> HRLowPass = data.getLowpassHR(0.15);
+                for (int i = 0; i < HRLowPass.size(); i++) {
+                    final double lp = HRLowPass.get(i).getY();
+                    final double hr = data.getHRAt(i);
+                    final double hrv = Math.abs(lp - hr);
+                    HRV.add(new DataPoint(HRLowPass.get(i).getX(), hrv));
 
-                if (hrv > 18) {
-                    HRVfilter.add(hrv);
+                    if (hrv > 18) {
+                        HRVfilter.add(hrv);
+                    }
                 }
-            }
 
-            Collections.sort(HRVfilter);
-            if(HRVfilter.size() > 0) {
-                HRVthresh = HRVfilter.get((int) (0.8 * HRVfilter.size()));
+                Collections.sort(HRVfilter);
+                if (HRVfilter.size() > 0) {
+                    HRVthresh = HRVfilter.get((int) (0.8 * HRVfilter.size()));
+                }
+            }else{
+                HRVthresh = 0.15;
             }
         }
 
@@ -96,7 +100,13 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
                 Log.d(TAG, "Sleeping at time "+i);
                 if(!sleeping){
                     //End a region
-                    if(!data.hasHRData() || maxintime(HRV, lastTime, i - SleepData.STEPMILLIS) < HRVthresh) {
+                    boolean remclassifier = false;
+                    if(data.hasSDNNData()){
+                        remclassifier = maxintime(data.getSDNN(), lastTime, i - SleepData.STEPMILLIS)  < HRVthresh;
+                    }else if(data.hasHRData()){
+                        remclassifier =  maxintime(HRV, lastTime, i - SleepData.STEPMILLIS) < HRVthresh;
+                    }
+                    if(!data.hasHRData() || remclassifier) {
                         add(new DataRegion(
                                 lastTime,
                                 i - SleepData.STEPMILLIS,

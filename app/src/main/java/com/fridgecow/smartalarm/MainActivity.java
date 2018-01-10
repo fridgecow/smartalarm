@@ -59,7 +59,7 @@ public class MainActivity extends WearableActivity {
             mService = binder.getService();
             mBinding = false;
             mBound = true;
-            Log.d(TAG,"Bound to tracking service");
+            Log.d(TAG,"Bound to tracking service.");
 
             //Update graphics
             updateViews();
