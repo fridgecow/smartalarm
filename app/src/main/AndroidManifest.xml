@@ -62,6 +62,14 @@
         <activity
             android:name=".SleepSummaryActivity"
             android:label="@string/title_activity_sleep_summary" />
+        <activity
+            android:name=".PrivacyPolicyActivity"
+            android:label="@string/title_activity_privacy_policy">
+            <intent-filter>
+                <action android:name="privacypolicy"/>
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

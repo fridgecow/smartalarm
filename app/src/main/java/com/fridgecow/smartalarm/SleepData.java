@@ -239,8 +239,12 @@ public class SleepData {
                 return list.get(lower).getY();
             }
         }else{
-            Log.d(TAG, "Time to interpolate outside of range");
-            return 0;
+            Log.d(TAG, "Time to interpolate outside of range - assuming closest value");
+            if(target < list.get(0).getX()){
+                return list.get(0).getY();
+            }else{
+                return list.get(list.size()-1).getY();
+            }
         }
     }
 

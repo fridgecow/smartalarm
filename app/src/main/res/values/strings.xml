@@ -61,4 +61,32 @@
     <string name="legend_wakefulness">Wakefulness</string>
     <string name="summary_delete">Delete</string>
     <string name="hrm_smart_title">Smart Monitoring</string>
+
+    <string name="title_activity_privacy_policy">Privacy Policy</string>
+    <string name="privacy_policy_html">
+        Available at <a href='https://www.fridgecow.com/smartalarm/privacy.html'>fridgecow.com/smartalarm/privacy</a>\n\n
+        The app is completely open source. The information it sends and receives can be viewed and audited directly, and, if so desired, removed. That doesn\'t and will never prevent your use of the app as a whole.\n\n
+
+        As guidance, here\'s what the app sends in various circumstances:\n
+          	• <b>Email Export:</b> Your email address and full CSV of the sleep recording is sent, along with your timezone so the server can interpret the CSV correctly.\n
+          	• <b>IFTTT integration:</b> Only the documented events are sent, using your IFTTT maker key.\n
+        \n
+        <i>All data is sent over HTTPS</i>\n\n
+        Here\'s what I store in my database (literally just transcribing the fields):\n
+        <i>NB: When I say "user", I mean "email address", since that is the only identifying information stored.</i>\n
+
+        • A unique numeric ID for each user.\n
+        • The date this user was registered <i>(NB: for users before v1.5.1a, this is when I imported the email into the database).</i>\n
+        • <b>The user\'s email address.</b>\n
+        • Whether the user has confirmed their email address, or unsubscribed from all emails.\n
+        • The number of times this email has been used (number of exports, also inaccurate before v1.5.1a).\n
+        • The date this address was last used or updated.\n
+
+        The CSV of your sleep is not saved, however the graph output is stored temporarily as a by-product of the graphing library used. It is deleted as soon as the export email is sent.\n
+        General notes: your data is yours. If you contact me at <a href='mailto:tom@fridgecow.com'>tom@fridgecow.com</a>, I will delete any data I hold and attempt to provide you proof of that. I will not knowingly provide your data to anyone else, and if I find out someone got your data from me, I will attempt to notify you. I will also attempt to notify you if the policy in this last paragraph changes.\n
+        If you would like a fullproof method of getting notified on update, I recommend IFTTT or a similar service that can periodically check this page for changes.\n
+        I hope this is satisfactory. If not, I have an email address.\n
+           Cheers,\n
+           Tom
+    </string>
 </resources>

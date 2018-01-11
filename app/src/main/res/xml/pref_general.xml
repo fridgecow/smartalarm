@@ -140,4 +140,17 @@
 
         </PreferenceScreen>
     </PreferenceScreen>
+    <PreferenceScreen
+        android:title="About"
+        android:icon="@drawable/ic_info_black_24dp">
+
+            <!--suppress AndroidDomInspection -->
+            <PreferenceScreen
+                android:title="Version"
+                android:summary="@string/versionName">
+            </PreferenceScreen>
+
+            <intent android:title="Privacy Policy" android:action="privacypolicy" android:key="null" />
+
+    </PreferenceScreen>
 </PreferenceScreen>
