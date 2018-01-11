@@ -72,6 +72,8 @@ public class SleepSummaryActivity extends WearableActivity {
         for(DataRegion d : mData){
             if(d.getLabel().equals(SleepSummaryData.WAKEREGION)){
                 wakeTime += Math.min(d.getEnd(), mData.getEnd()) - Math.max(d.getStart(), mData.getStart());
+            }else if(d.getLabel().equals(SleepSummaryData.REMREGION)){
+                findViewById(R.id.rem_legend).setVisibility(View.VISIBLE);
             }
         }
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.US);
