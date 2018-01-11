@@ -87,7 +87,7 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
                     HRVthresh = HRVfilter.get((int) (0.8 * HRVfilter.size()));
                 }
             }else{
-                HRVthresh = 0.15;
+                HRVthresh = 0.19;
             }
         }
 
