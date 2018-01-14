@@ -300,7 +300,11 @@ public class SleepData {
     }
 
     public double getEnd(){
-        return mSleepMotion.get(mSleepMotion.size()-1).getX();
+        if(mSleepMotion.size() == 0){
+            return 0;
+        }else {
+            return mSleepMotion.get(mSleepMotion.size() - 1).getX();
+        }
     }
 
     public boolean getSleepingAt(int index){

@@ -56,6 +56,10 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
     public SleepSummaryData(SleepData data){
         super();
 
+        if(data.getDataLength() == 0){
+            return;
+        }
+
         mStart = data.getStart();
         mEnd = data.getEnd();
 
