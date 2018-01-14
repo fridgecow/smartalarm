@@ -22,6 +22,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.jjoe64.graphview.DefaultLabelFormatter;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
@@ -192,6 +193,16 @@ public class MainActivity extends WearableActivity {
 
         mGraphView.getSecondScale().setMinY(0);
         mGraphView.getSecondScale().setMaxY(100);
+        mGraphView.getSecondScale().setLabelFormatter(new DefaultLabelFormatter(){
+            @Override
+            public String formatLabel(double value, boolean isValueX){
+                if(isValueX){
+                    return super.formatLabel(value, true);
+                }else{
+                    return ""; //Show nothing
+                }
+            }
+        });
     }
 
     @Override
