@@ -224,6 +224,9 @@ public class SleepData {
     }
 
     private double interpolateListFromTime(List<DataPoint> list, double target){
+        if(list.size() == 0){
+            return 0;
+        }
         if(target >= list.get(0).getX() && target <= list.get(list.size()-1).getX()) {
             int lower = binaryTimeSearch(list, target);
             int upper = lower + 1;
@@ -327,7 +330,7 @@ public class SleepData {
     public String getCSV(boolean useHRM){
         //Loop through datapoints to get CSV data
         StringBuilder csv;
-        if(useHRM){
+        if(useHRM  && mSleepHR.size() > 0){
             csv =new StringBuilder("Unix Time,Motion,Heart Rate, SDNN\n");
         }else{
             csv = new StringBuilder("Unix Time,Motion\n");
@@ -335,7 +338,7 @@ public class SleepData {
         for (int i = 0; i < getDataLength(); i++) {
             long t = (long) getTimeAt(i);
             double m = getMotionAt(i);
-            if (useHRM) {
+            if (useHRM && mSleepHR.size() > 0) {
                 double h, n;
                 if(mSleepHR.size() < mSleepMotion.size()){
                     //Find the HR for this time
