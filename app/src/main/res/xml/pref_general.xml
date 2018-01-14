@@ -142,7 +142,7 @@
     </PreferenceScreen>
     <PreferenceScreen
         android:title="About"
-        android:icon="@drawable/ic_info_black_24dp">
+        android:icon="@drawable/ic_info">
 
             <!--suppress AndroidDomInspection -->
             <PreferenceScreen
