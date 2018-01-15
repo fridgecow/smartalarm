@@ -32,9 +32,15 @@
                     <TextView
                         android:id="@+id/textView2"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:text="@string/changelog_html"
                         android:textAppearance="@style/TextAppearance.AppCompat.Caption" />
+
+                    <Button
+                        android:id="@+id/changelog_done"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/changelog_donetext" />
 
                 </LinearLayout>
 

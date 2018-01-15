@@ -148,7 +148,8 @@
             <intent
                 android:title="Version"
                 android:summary="@string/versionName"
-                android:action="changelog" />
+                android:action="changelog"
+                android:key="null"/>
 
             <intent android:title="Privacy Policy" android:action="privacypolicy" android:key="null" />
 

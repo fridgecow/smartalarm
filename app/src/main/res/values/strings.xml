@@ -90,5 +90,11 @@
            Tom
     </string>
     <string name="legend_rem">REM (Estimate)</string>
-    <string name="changelog_html">New in this version:\\n\\nWho knows</string>
+    <string name="changelog_html">
+        New in this version:\n
+        <ul>
+            <li>Info on first run!</li>
+        </ul>
+    </string>
+    <string name="changelog_donetext">Let\'s Go!</string>
 </resources>
