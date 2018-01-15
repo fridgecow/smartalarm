@@ -161,6 +161,12 @@
                     android:textAppearance="@style/TextAppearance.AppCompat" />
 
                 <Button
+                    android:id="@+id/summary_export_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/button_export" />
+
+                <Button
                     android:id="@+id/summary_delete_button"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

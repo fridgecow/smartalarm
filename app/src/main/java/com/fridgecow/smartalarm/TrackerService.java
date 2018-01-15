@@ -61,6 +61,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     private static final int NOTIFICATION_INTENT = 10;
     private static final int PERMISSION_REQUEST_SENSOR = 1;
 
+
     private Context mContext = this;
 
     private static final String TRIGGER_AWAKE = "awake";
@@ -70,6 +71,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     private static final int API_EMAILEXPORT = 0;
     private static final int API_EMAILCONFIRM = 1;
+    private static final int API_EMAILSUMMARYEXPORT = 2;
 
     //Things that need to be in configuration
     private static final String OFFLINE_ACC = "sleepdata.csv";
@@ -385,6 +387,10 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     }
 
     public void exportData() {
+        exportData(mSleepData);
+    }
+
+    public void exportData(SleepData data){
         //Get email address
         final String email = mPreferences.getString("email", "");
         if(email.equals("")) {
@@ -400,6 +406,22 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             params.put("tz", TimeZone.getDefault().getID());
 
             apiCall(API_EMAILEXPORT, params);
+        }
+    }
+
+    public void exportData(SleepSummaryData data){
+        //Get email address
+        final String email = mPreferences.getString("email", "");
+        if(email.equals("")) {
+            Toast.makeText(this, "Please input an email address", Toast.LENGTH_SHORT).show();
+        }else {
+            Map<String, String> params = new HashMap<>();
+
+            params.put("email", email);
+            params.put("csv", data.getCSV());
+            params.put("tz", TimeZone.getDefault().getID());
+
+            apiCall(API_EMAILSUMMARYEXPORT, params);
         }
     }
 

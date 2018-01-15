@@ -1,10 +1,13 @@
 package com.fridgecow.smartalarm;
 
 import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
 import android.view.View;
@@ -19,6 +22,8 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 public class SleepSummaryActivity extends WearableActivity {
+    private static final String TAG = "SleepSummaryActivity";
+
     public static final int VIEW = 0;
     public static final String DELETED = "deleted";
     public static String PREF_FILE;
@@ -29,6 +34,30 @@ public class SleepSummaryActivity extends WearableActivity {
 
     private SleepView mSleepView;
     private Button mDeleteButton;
+    private Button mExportButton;
+
+    TrackerService mService;
+    boolean mBound = false;
+
+    /* Defines callbacks for service binding, passed to bindService() */
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            TrackerService.LocalBinder binder = (TrackerService.LocalBinder) service;
+            mService = binder.getService();
+            mBound = true;
+            Log.d(TAG,"Summary Activity bound to tracking service.");
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+
+            Log.d(TAG, "Summary Activity unbound from tracking service");
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +66,7 @@ public class SleepSummaryActivity extends WearableActivity {
 
         mSleepView = findViewById(R.id.sleepView);
         mDeleteButton = findViewById(R.id.summary_delete_button);
+        mExportButton = findViewById(R.id.summary_export_button);
 
         loadIntentExtras();
 
@@ -58,6 +88,16 @@ public class SleepSummaryActivity extends WearableActivity {
                                 finish();
                             }})
                         .setNegativeButton(android.R.string.no, null).show();
+            }
+        });
+
+        bindService(new Intent(this, TrackerService.class), mConnection, 0);
+        mExportButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(mBound){
+                    mService.exportData(mData);
+                }
             }
         });
 

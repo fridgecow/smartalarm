@@ -199,4 +199,15 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
     public void setEnd(double mEnd) {
         this.mEnd = mEnd;
     }
+
+    public String getCSV(){
+        StringBuilder csv = new StringBuilder("Region Type,Unix Time (Start),Unix Time (End)\n");
+
+        csv.append("tracking,").append(this.getStart()).append(",").append(this.getEnd()).append("\n");
+        for(DataRegion d : this){
+            csv.append(d.getLabel()).append(",").append(d.getStart()).append(",").append(d.getEnd()).append("\n");
+        }
+
+        return csv.toString();
+    }
 }
