@@ -7,7 +7,7 @@ android {
         minSdkVersion 25
         targetSdkVersion 26
         versionCode 171
-        versionName "1.7.1a"
+        versionName "1.7.2a"
     }
     buildTypes {
         release {
