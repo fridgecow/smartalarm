@@ -341,7 +341,7 @@ public class SleepData {
             if(mSleepSDNN.size() > 0) {
                 csv = new StringBuilder("Unix Time,Motion,Heart Rate, SDNN\n");
             }else{
-                csv = new StringBuilder("Unix Time,Motion,Heart Rate");
+                csv = new StringBuilder("Unix Time,Motion,Heart Rate\n");
             }
         }else{
             csv = new StringBuilder("Unix Time,Motion\n");
