@@ -70,6 +70,14 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ChangelogActivity"
+            android:label="@string/title_activity_privacy_policy">
+            <intent-filter>
+                <action android:name="changelog"/>
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

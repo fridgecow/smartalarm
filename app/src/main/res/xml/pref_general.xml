@@ -145,10 +145,10 @@
         android:icon="@drawable/ic_info">
 
             <!--suppress AndroidDomInspection -->
-            <PreferenceScreen
+            <intent
                 android:title="Version"
-                android:summary="@string/versionName">
-            </PreferenceScreen>
+                android:summary="@string/versionName"
+                android:action="changelog" />
 
             <intent android:title="Privacy Policy" android:action="privacypolicy" android:key="null" />
 

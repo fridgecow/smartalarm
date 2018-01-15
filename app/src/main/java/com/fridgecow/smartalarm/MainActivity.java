@@ -80,6 +80,14 @@ public class MainActivity extends WearableActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        //Check if this is the first time launching this version
+        if(!mPreferences.getString("last_version", "").equals(getString(R.string.versionName))){
+            mPreferences.edit().putString("last_version", getString(R.string.versionName)).apply();
+
+            startActivity(new Intent("changelog"));
+        }
+
         mTextView = findViewById(R.id.text);
         mStopButton = findViewById(R.id.button2);
         mResetButton = findViewById(R.id.button_reset);
@@ -89,8 +97,6 @@ public class MainActivity extends WearableActivity {
         mSettingsButton = findViewById(R.id.button_settings);
         mGraphNoData = findViewById(R.id.nodata);
         mSummaryButton = findViewById(R.id.view_summaries);
-
-        mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         //Start tracking service and bind to it
         Intent service = new Intent(this, TrackerService.class);
