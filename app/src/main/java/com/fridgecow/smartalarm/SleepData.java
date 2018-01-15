@@ -362,6 +362,8 @@ public class SleepData {
                 if(mSleepSDNN.size() > 0) {
                     n = getSDNNAt(t);
                     csv.append(t).append(",").append(m).append(",").append(h).append(",").append(n).append("\n");
+                }else{
+                    csv.append(t).append(",").append(m).append(",").append(h).append("\n");
                 }
             } else {
                 csv.append(t).append(",").append(m).append("\n");
