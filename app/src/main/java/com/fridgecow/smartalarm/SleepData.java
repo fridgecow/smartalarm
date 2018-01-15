@@ -170,8 +170,11 @@ public class SleepData {
         double SDNN = 0;
         if(mHRDirty) {
             mSleepHR.add(new DataPoint(time, mHRMax));
-            SDNN = Math.sqrt((mNNtotal*mNNsqsum - mNNsum*mNNsum)/(mNNtotal*(mNNtotal-1)));
-            mSleepSDNN.add(new DataPoint(time, SDNN));
+
+            if(mNNtotal > 0) {
+                SDNN = Math.sqrt((mNNtotal * mNNsqsum - mNNsum * mNNsum) / (mNNtotal * (mNNtotal - 1)));
+                mSleepSDNN.add(new DataPoint(time, SDNN));
+            }
         }
 
         Log.d(TAG, "Max Acc: " + mAccelMax + ", HR: "+mHRMax+" SDNN: "+SDNN);
@@ -335,7 +338,11 @@ public class SleepData {
         //Loop through datapoints to get CSV data
         StringBuilder csv;
         if(useHRM  && mSleepHR.size() > 0){
-            csv =new StringBuilder("Unix Time,Motion,Heart Rate, SDNN\n");
+            if(mSleepSDNN.size() > 0) {
+                csv = new StringBuilder("Unix Time,Motion,Heart Rate, SDNN\n");
+            }else{
+                csv = new StringBuilder("Unix Time,Motion,Heart Rate");
+            }
         }else{
             csv = new StringBuilder("Unix Time,Motion\n");
         }
@@ -351,8 +358,11 @@ public class SleepData {
                     //Simply get it from the index
                     h = getHRAt(i);
                 }
-                n = getSDNNAt(t);
-                csv.append(t).append(",").append(m).append(",").append(h).append(",").append(n).append("\n");
+
+                if(mSleepSDNN.size() > 0) {
+                    n = getSDNNAt(t);
+                    csv.append(t).append(",").append(m).append(",").append(h).append(",").append(n).append("\n");
+                }
             } else {
                 csv.append(t).append(",").append(m).append("\n");
             }
