@@ -93,8 +93,11 @@
     <string name="changelog_html">
         New in this version:\n
         <ul>
-            <li>Info on first run!</li>
+            <li>Info on first run! This helps keep users up-to-date (but you'll only see this on a first run or after an update)</li>
+            <li>Export button inside summaries! Now you can export past summaries to email</li>
         </ul>
+
+        Thanks for sticking with Smart Alarm through its infancy!
     </string>
     <string name="changelog_donetext">Let\'s Go!</string>
 </resources>
