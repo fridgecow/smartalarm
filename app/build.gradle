@@ -6,7 +6,7 @@ android {
         applicationId "com.fridgecow.smartalarm"
         minSdkVersion 25
         targetSdkVersion 26
-        versionCode 171
+        versionCode 172
         versionName "1.7.2a"
     }
     buildTypes {

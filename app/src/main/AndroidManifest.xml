@@ -66,7 +66,8 @@
             android:name=".PrivacyPolicyActivity"
             android:label="@string/title_activity_privacy_policy">
             <intent-filter>
-                <action android:name="privacypolicy"/>
+                <action android:name="privacypolicy" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -74,7 +75,8 @@
             android:name=".ChangelogActivity"
             android:label="@string/title_activity_privacy_policy">
             <intent-filter>
-                <action android:name="changelog"/>
+                <action android:name="changelog" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>

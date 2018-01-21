@@ -8,21 +8,29 @@ import android.widget.TextView;
 
 public class ChangelogActivity extends WearableActivity {
 
-    private Button mTextView;
+    private Button mButton;
+    private TextView onBoarding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_changelog);
 
-        mTextView = findViewById(R.id.changelog_done);
+        mButton = findViewById(R.id.changelog_done);
+        onBoarding = findViewById(R.id.onboarding);
 
-        mTextView.setOnClickListener(new View.OnClickListener() {
+        mButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 finish();
             }
         });
+
+        if(getIntent().getBooleanExtra("first", false)){
+            onBoarding.setVisibility(View.VISIBLE);
+        }else{
+            onBoarding.setVisibility(View.GONE);
+        }
 
         // Enables Always-on
         setAmbientEnabled();

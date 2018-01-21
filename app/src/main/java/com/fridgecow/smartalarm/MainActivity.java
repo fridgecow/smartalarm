@@ -82,7 +82,14 @@ public class MainActivity extends WearableActivity {
 
         mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         //Check if this is the first time launching this version
-        if(!mPreferences.getString("last_version", "").equals(getString(R.string.versionName))){
+        if(mPreferences.getString("last_version", "").equals("")){
+            //Completely new user
+            mPreferences.edit().putString("last_version", getString(R.string.versionName)).apply();
+
+            Intent onboarding = new Intent("changelog");
+            onboarding.putExtra("first", true);
+            startActivity(onboarding);
+        }if(!mPreferences.getString("last_version", "").equals(getString(R.string.versionName))){
             mPreferences.edit().putString("last_version", getString(R.string.versionName)).apply();
 
             startActivity(new Intent("changelog"));

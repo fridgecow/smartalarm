@@ -100,4 +100,11 @@
         Thanks for sticking with Smart Alarm through its infancy!
     </string>
     <string name="changelog_donetext">Let\'s Go!</string>
+
+    <string name="onboarding_text">
+        Welcome to Smart Alarm!<br />
+        This app can track motion and heart rate, and intelligently estimate sleep stage cycles based on that.<br />
+        To get started with tracking, press the play button!<br />
+        Be sure to go into to settings to configure the alarm and tracking.<br />
+    </string>
 </resources>
