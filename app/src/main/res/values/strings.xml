@@ -93,8 +93,7 @@
     <string name="changelog_html">
         New in this version:\n
         <ul>
-            <li>Info on first run! This helps keep users up-to-date (but you'll only see this on a first run or after an update)</li>
-            <li>Export button inside summaries! Now you can export past summaries to email</li>
+            <li>Onboarding for new users</li>
         </ul>
 
         Thanks for sticking with Smart Alarm through its infancy!
@@ -102,9 +101,9 @@
     <string name="changelog_donetext">Let\'s Go!</string>
 
     <string name="onboarding_text">
-        Welcome to Smart Alarm!<br />
-        This app can track motion and heart rate, and intelligently estimate sleep stage cycles based on that.<br />
-        To get started with tracking, press the play button!<br />
-        Be sure to go into to settings to configure the alarm and tracking.<br />
+        Welcome to Smart Alarm!\n\n
+        This app can track motion and heart rate, and intelligently estimate sleep stage cycles based on that.\n\n
+        To get started with tracking, press the play button!\n\n
+        Be sure to go into to settings to configure the alarm and tracking.\n\n
     </string>
 </resources>
