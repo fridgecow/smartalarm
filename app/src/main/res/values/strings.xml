@@ -93,10 +93,8 @@
     <string name="changelog_html">
         New in this version:\n
         <ul>
-            <li>Onboarding for new users</li>
+            <li>Fixed a rare crash</li>
         </ul>
-
-        Thanks for sticking with Smart Alarm through its infancy!
     </string>
     <string name="changelog_donetext">Let\'s Go!</string>
 
