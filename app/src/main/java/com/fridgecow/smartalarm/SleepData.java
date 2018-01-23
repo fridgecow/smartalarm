@@ -275,7 +275,13 @@ public class SleepData {
     }
 
     public double getTimeAt(int index){
-        return mSleepMotion.get(index).getX();
+        if(index < 0){
+            return mSleepMotion.get(0).getX();
+        }else if(index >= mSleepMotion.size()){
+            return mSleepMotion.get(mSleepMotion.size() -1).getX();
+        }else {
+            return mSleepMotion.get(index).getX();
+        }
     }
 
     public double getMotionMean(){

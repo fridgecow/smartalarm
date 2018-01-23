@@ -136,7 +136,7 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
         }
 
         //Deal with last section
-        if(!sleeping){
+        if(!sleeping && data.getDataLength() > 0){
             add(new DataRegion(
                     lastTime,
                     data.getTimeAt(data.getDataLength()-1),
