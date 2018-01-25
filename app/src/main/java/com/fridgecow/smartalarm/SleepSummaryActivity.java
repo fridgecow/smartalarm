@@ -151,7 +151,9 @@ public class SleepSummaryActivity extends WearableActivity {
         try {
             mData = new SleepSummaryData(this, mFile);
         }catch(IOException e){
-            throw new IllegalArgumentException("Sleep file invalid");
+            deleteFile(mFile);
+            Toast.makeText(this, "Sleep data is corrupt", Toast.LENGTH_SHORT).show();
+            finish();
         }
 
         if(mData.size() == 0){
