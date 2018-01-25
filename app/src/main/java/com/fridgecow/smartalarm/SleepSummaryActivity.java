@@ -145,7 +145,7 @@ public class SleepSummaryActivity extends WearableActivity {
         mFile = getIntent().getStringExtra(PREF_FILE);
 
         if(mFile == null || mFile.isEmpty()){
-            throw new IllegalArgumentException("Missing Sleep file in Intent.");
+            finish();
         }
 
         try {
