@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.wearable.activity.WearableActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -23,10 +24,14 @@ public class AlarmActivity extends WearableActivity {
     private Button mDone;
     private Button mSnooze;
 
+    private boolean mFinished = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alarm);
+
+        mFinished = false;
 
         mDone = (Button) findViewById(R.id.button3);
         mSnooze = findViewById(R.id.button5);
@@ -60,10 +65,14 @@ public class AlarmActivity extends WearableActivity {
         super.onPause();
 
         //Snooze or Dismiss depending on preference
-        if(mPreferences.getBoolean("smartalarm_dismiss_action", true)){
-            snooze();
-        }else{
-            dismiss();
+        if(!mFinished) {
+            if (mPreferences.getBoolean("smartalarm_dismiss_action", true)) {
+                Log.d("AlarmActivity", "Snoozing");
+                snooze();
+            } else {
+                Log.d("AlarmActivity", "Dismissing");
+                dismiss();
+            }
         }
     }
 
@@ -79,11 +88,13 @@ public class AlarmActivity extends WearableActivity {
 
         //Finish for now
         mVibrator.cancel();
+        mFinished = true;
         finish();
     }
 
     private void dismiss(){
         mVibrator.cancel();
+        mFinished = true;
         finish();
     }
 }
