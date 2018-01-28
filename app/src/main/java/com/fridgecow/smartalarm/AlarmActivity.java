@@ -16,6 +16,9 @@ import android.widget.Toast;
 
 public class AlarmActivity extends WearableActivity {
 
+    private SharedPreferences mPreferences;
+    private Vibrator mVibrator;
+
     private TextView mTime;
     private Button mDone;
     private Button mSnooze;
@@ -31,39 +34,56 @@ public class AlarmActivity extends WearableActivity {
         mDone.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-                vibrator.cancel();
-
-                finish();
+            dismiss();
             }
         });
         mSnooze.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent alarmIntent = new Intent(view.getContext(), AlarmActivity.class);
-
-                PendingIntent snoozeIntent = PendingIntent.getActivity(view.getContext(),  0, alarmIntent, 0);
-                AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(view.getContext());
-                int snoozeTime = prefs.getInt("smartalarm_snooze", 5)*60*1000;
-
-                alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + snoozeTime, snoozeIntent);
-
-                //Finish for now
-                Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-                vibrator.cancel();
-
-                finish();
+            snooze();
             }
         });
 
-        Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+
+        mVibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         long[] vibrationPattern = {0, 500, 50, 300};
         final int indexInPatternToRepeat = 0;
-        vibrator.vibrate(vibrationPattern, indexInPatternToRepeat);
+        mVibrator.vibrate(vibrationPattern, indexInPatternToRepeat);
 
         // Enables Always-on
         setAmbientEnabled();
+    }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+
+        //Snooze or Dismiss depending on preference
+        if(mPreferences.getBoolean("smartalarm_dismiss_action", true)){
+            snooze();
+        }else{
+            dismiss();
+        }
+    }
+
+    private void snooze(){
+        Intent alarmIntent = new Intent(getApplicationContext(), AlarmActivity.class);
+
+        PendingIntent snoozeIntent = PendingIntent.getActivity(getApplicationContext(),  0, alarmIntent, 0);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+        int snoozeTime = mPreferences.getInt("smartalarm_snooze", 5)*60*1000;
+
+        alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + snoozeTime, snoozeIntent);
+
+        //Finish for now
+        mVibrator.cancel();
+        finish();
+    }
+
+    private void dismiss(){
+        mVibrator.cancel();
+        finish();
     }
 }

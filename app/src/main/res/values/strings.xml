@@ -104,4 +104,7 @@
         To get started with tracking, press the play button!\n\n
         Be sure to go into to settings to configure the alarm and tracking.\n\n
     </string>
+    <string name="smartalarm_settings_dismiss_action">Dismiss Action</string>
+    <string name="smartalarm_snooze">Snooze</string>
+    <string name="smartalarm_done">Done</string>
 </resources>

@@ -40,6 +40,16 @@
             android:defaultValue="5"
             android:icon="@drawable/ic_snooze"
             />
+
+        <SwitchPreference
+            android:key="smartalarm_dismiss_action"
+            android:title="@string/smartalarm_settings_dismiss_action"
+            android:summaryOn="@string/smartalarm_snooze"
+            android:summaryOff="@string/smartalarm_done"
+            app:wear_iconOn="@drawable/ic_snooze"
+            app:wear_iconOff="@drawable/ic_check_white"
+            android:defaultValue="true"
+            />
     </PreferenceScreen>
 
     <PreferenceScreen
