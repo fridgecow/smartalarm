@@ -14,6 +14,7 @@ import com.fridgecow.smartalarm.TimeInputActivity;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * Created by tom on 31/12/17.
@@ -77,6 +78,7 @@ public class TimePreference extends WearPreference {
         int minute = (time % 100) % 60;
 
         Calendar ret = Calendar.getInstance();
+        ret.setTimeZone(TimeZone.getDefault());
         ret.set(Calendar.HOUR_OF_DAY, hour);
         ret.set(Calendar.MINUTE, minute);
         ret.set(Calendar.SECOND, 0);
