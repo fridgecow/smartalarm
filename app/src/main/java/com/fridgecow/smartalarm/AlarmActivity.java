@@ -93,6 +93,7 @@ public class AlarmActivity extends WearableActivity {
     }
 
     private void dismiss(){
+        Log.d("AlarmActivity", "Button dismiss");
         mVibrator.cancel();
         mFinished = true;
         finish();
