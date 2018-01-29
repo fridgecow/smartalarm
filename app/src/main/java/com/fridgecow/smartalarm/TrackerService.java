@@ -247,7 +247,8 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                     }
 
                     //Check if sleeping
-                    if(mSleepData.getSleepingAt(mSleepData.getDataLength()-1)){
+                    boolean sleeping = mSleepData.getSleepingAt(mSleepData.getDataLength()-1);
+                    if(sleeping){
                         if(!mSleeping){
                             mSleeping = true;
                             triggerIFTTT(TRIGGER_ASLEEP);
@@ -281,12 +282,8 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                         }else if(mSmartAlarm.getTime().getTime() - now.getTime() <= window*60*1000){
                             Log.d(TAG, "In alarm range");
 
-                            if(mSleepMotionMean < 0) {
-                                mSleepMotionMean = mSleepData.getMotionMean();
-                            }
-
-                            if(mSleepData.getMotionAt(mSleepData.getDataLength()) > mSleepMotionMean){
-                                //Light sleep, activate alarm
+                            if(!sleeping){
+                                //Light sleep or not sleeping, activate alarm
                                 activateAlarm();
                             }
                         }
