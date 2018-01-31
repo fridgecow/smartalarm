@@ -116,6 +116,16 @@
             android:max="60"
             android:defaultValue="1" />
 
+        <SwitchPreference
+            android:key="datapoint_forceaccurate"
+            android:title="@string/datapoint_forceaccurate_title"
+            android:summaryOn="@string/datapoint_forceaccurate_on"
+            android:summaryOff="@string/datapoint_forceaccurate_off"
+            app:wear_iconOn="@drawable/ic_check_white"
+            app:wear_iconOff="@drawable/ic_cross_white"
+            android:defaultValue="false"
+            />
+
         <PreferenceScreen
             android:title="Heart Rate Monitor"
             android:icon="@drawable/ic_heart">

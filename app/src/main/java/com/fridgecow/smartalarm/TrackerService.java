@@ -370,7 +370,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             mSensorManager.unregisterListener(this);
 
             //Stop minute-by-minute tracking
-            if(true) {
+            if(!mPreferences.getBoolean("datapoint_forceaccurate", false)) {
                 mTrackingHandler.removeCallbacks(mTrackingRunnable);
             }else{
                 Intent intent = new Intent(this, TrackerService.class);
@@ -491,7 +491,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             startForeground(ONGOING_NOTIFICATION_ID, notification);
 
             //Ping ourselves every datapoint_rate minutes
-            if(true){
+            if(!mPreferences.getBoolean("datapoint_forceaccurate", false)){
                 mTrackingHandler.post(mTrackingRunnable);
             }else {
                 PendingIntent pingIntent = PendingIntent.getService(this, 0, new Intent(this, TrackerService.class), 0);
