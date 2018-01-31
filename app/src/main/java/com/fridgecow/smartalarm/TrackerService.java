@@ -144,86 +144,10 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
         @Override
         public void run() {
-            if(mRunning){
-                if(mAccelData) {
-                    Log.d(TAG, "Tracking Runnable doing work");
-                    mSleepData.recordPoint();
+            recordLoop();
 
-                    //Deal with Smart HR tracking
-                    if(mPreferences.getBoolean("hrm_smart", true)){
-                        if(mHRPointsToTrack > 0){
-                            mHRPointsToTrack--;
-                            mHRJustTurnedOn = false;
-
-                            if(mHRPointsToTrack == 0){
-                                stopHRRecord();
-                            }
-                        }
-
-                        mHRPointsSinceTracked++;
-                        Log.d(TAG, mHRPointsSinceTracked+" points since HR tracked");
-
-                        if(mHRPointsSinceTracked >= 10){
-                            if(!mSleeping){ //Interesting times - track every 10 minutes for 5 minutes
-                                recordHRFor(5);
-                            }else{ //Track every 10 minutes for 1 minute
-                                recordHRFor(5);
-                            }
-                        }
-                    }
-
-                    //Check if sleeping
-                    boolean sleeping = mSleepData.getSleepingAt(mSleepData.getDataLength()-1);
-                    if(sleeping){
-                        if(!mSleeping){
-                            mSleeping = true;
-                            triggerIFTTT(TRIGGER_ASLEEP);
-                            mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("You're asleep!").build());
-
-                            //Record for 2 minutes
-                            if(mPreferences.getBoolean("hrm_smart", true)){
-                                recordHRFor(2);
-                            }
-                        }
-                    }else if(mSleeping){
-                        mSleeping = false;
-                        mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Good morning!").build());
-                        triggerIFTTT(TRIGGER_AWAKE);
-
-                        //Record for 2 minutes
-                        if(mPreferences.getBoolean("hrm_smart", true)){
-                            recordHRFor(2);
-                        }
-                    }
-
-                    //If smart alarm, check if "light sleep"
-                    if(mSmartAlarm != null){
-                        Date now = Calendar.getInstance().getTime();
-
-                        int window = mPreferences.getInt("smartalarm_window", 30);
-
-                        //Check alarm range
-                        if(now.after(mSmartAlarm.getTime())){
-                            activateAlarm();
-                        }else if(mSmartAlarm.getTime().getTime() - now.getTime() <= window*60*1000){
-                            Log.d(TAG, "In alarm range");
-
-                            if(!sleeping){
-                                //Light sleep or not sleeping, activate alarm
-                                activateAlarm();
-                            }
-                        }
-                    }
-
-                    //Reset
-                    mAccelData = false;
-                }
-
-                int pollRate = mPreferences.getInt("datapoint_rate", 1);
-                mTrackingHandler.postDelayed(this, pollRate*60*1000);
-            }else{
-                Log.d(TAG, "Tracker Paused, not collecting data");
-            }
+            int pollRate = mPreferences.getInt("datapoint_rate", 1);
+            mTrackingHandler.postDelayed(this, pollRate*60*1000);
         }
     };
 
@@ -309,82 +233,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent == null || intent.getStringExtra("task") == null) {
-            if(mRunning){
-                if(mAccelData) {
-                    mSleepData.recordPoint();
-
-                    //Deal with Smart HR tracking
-                    if(mPreferences.getBoolean("hrm_smart", true)){
-                        if(mHRPointsToTrack > 0){
-                            mHRPointsToTrack--;
-                            mHRJustTurnedOn = false;
-
-                            if(mHRPointsToTrack == 0){
-                                stopHRRecord();
-                            }
-                        }
-
-                        mHRPointsSinceTracked++;
-                        Log.d(TAG, mHRPointsSinceTracked+" points since HR tracked");
-
-                        if(mHRPointsSinceTracked >= 10){
-                            if(!mSleeping){ //Interesting times - track every 10 minutes for 5 minutes
-                                recordHRFor(5);
-                            }else{ //Track every 10 minutes for 1 minute
-                                recordHRFor(5);
-                            }
-                        }
-                    }
-
-                    //Check if sleeping
-                    boolean sleeping = mSleepData.getSleepingAt(mSleepData.getDataLength()-1);
-                    if(sleeping){
-                        if(!mSleeping){
-                            mSleeping = true;
-                            triggerIFTTT(TRIGGER_ASLEEP);
-                            mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("You're asleep!").build());
-
-                            //Record for 2 minutes
-                            if(mPreferences.getBoolean("hrm_smart", true)){
-                                recordHRFor(2);
-                            }
-                        }
-                    }else if(mSleeping){
-                        mSleeping = false;
-                        mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Good morning!").build());
-                        triggerIFTTT(TRIGGER_AWAKE);
-
-                        //Record for 2 minutes
-                        if(mPreferences.getBoolean("hrm_smart", true)){
-                            recordHRFor(2);
-                        }
-                    }
-
-                    //If smart alarm, check if "light sleep"
-                    if(mSmartAlarm != null){
-                        Date now = Calendar.getInstance().getTime();
-
-                        int window = mPreferences.getInt("smartalarm_window", 30);
-
-                        //Check alarm range
-                        if(now.after(mSmartAlarm.getTime())){
-                            activateAlarm();
-                        }else if(mSmartAlarm.getTime().getTime() - now.getTime() <= window*60*1000){
-                            Log.d(TAG, "In alarm range");
-
-                            if(!sleeping){
-                                //Light sleep or not sleeping, activate alarm
-                                activateAlarm();
-                            }
-                        }
-                    }
-
-                    //Reset
-                    mAccelData = false;
-                }
-            }else{
-                Log.d(TAG, "Tracker Paused, not collecting data");
-            }
+            recordLoop();
         }else{
             String task = intent.getStringExtra("task");
             Log.d(TAG, task);
@@ -802,5 +651,85 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         };
         mQueue.add(postRequest);
 
+    }
+
+    private void recordLoop(){
+        if(mRunning){
+            if(mAccelData) {
+                Log.d(TAG, "Tracking Runnable doing work");
+                mSleepData.recordPoint();
+
+                //Deal with Smart HR tracking
+                if(mPreferences.getBoolean("hrm_smart", true)){
+                    if(mHRPointsToTrack > 0){
+                        mHRPointsToTrack--;
+                        mHRJustTurnedOn = false;
+
+                        if(mHRPointsToTrack == 0){
+                            stopHRRecord();
+                        }
+                    }
+
+                    mHRPointsSinceTracked++;
+                    Log.d(TAG, mHRPointsSinceTracked+" points since HR tracked");
+
+                    if(mHRPointsSinceTracked >= 10){
+                        if(!mSleeping){ //Interesting times - track every 10 minutes for 5 minutes
+                            recordHRFor(5);
+                        }else{ //Track every 10 minutes for 1 minute
+                            recordHRFor(5);
+                        }
+                    }
+                }
+
+                //Check if sleeping
+                boolean sleeping = mSleepData.getSleepingAt(mSleepData.getDataLength()-1);
+                if(sleeping){
+                    if(!mSleeping){
+                        mSleeping = true;
+                        triggerIFTTT(TRIGGER_ASLEEP);
+                        mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("You're asleep!").build());
+
+                        //Record for 2 minutes
+                        if(mPreferences.getBoolean("hrm_smart", true)){
+                            recordHRFor(2);
+                        }
+                    }
+                }else if(mSleeping){
+                    mSleeping = false;
+                    mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Good morning!").build());
+                    triggerIFTTT(TRIGGER_AWAKE);
+
+                    //Record for 2 minutes
+                    if(mPreferences.getBoolean("hrm_smart", true)){
+                        recordHRFor(2);
+                    }
+                }
+
+                //If smart alarm, check if "light sleep"
+                if(mSmartAlarm != null){
+                    Date now = Calendar.getInstance().getTime();
+
+                    int window = mPreferences.getInt("smartalarm_window", 30);
+
+                    //Check alarm range
+                    if(now.after(mSmartAlarm.getTime())){
+                        activateAlarm();
+                    }else if(mSmartAlarm.getTime().getTime() - now.getTime() <= window*60*1000){
+                        Log.d(TAG, "In alarm range");
+
+                        if(!sleeping){
+                            //Light sleep or not sleeping, activate alarm
+                            activateAlarm();
+                        }
+                    }
+                }
+
+                //Reset
+                mAccelData = false;
+            }
+        }else{
+            Log.d(TAG, "Tracker Paused, not collecting data");
+        }
     }
 }
