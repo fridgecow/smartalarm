@@ -153,8 +153,16 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     @Override
     public void onAlarm() {
-        //Start tracking
-        play();
+        //Check if Smart Alarm needs to go off
+
+        Date now = Calendar.getInstance().getTime();
+        mSmartAlarm = TimePreference.parseTime(mPreferences.getInt("smartalarm_time", 700), true);
+        if(mPreferences.getBoolean("smartalarm_use", true) && now.after(mSmartAlarm.getTime())){
+            activateAlarm();
+        }else{
+            //Start tracking
+            play();
+        }
     }
 
 
