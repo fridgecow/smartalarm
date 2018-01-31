@@ -550,6 +550,25 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         if(mPreferences.getBoolean("smartalarm_use", true)){
             mSmartAlarm = TimePreference.parseTime(mPreferences.getInt("smartalarm_time", 700), true);
             Log.d(TAG, "Alarm set for "+mSmartAlarm.getTime());
+
+            //Ensure alarm delivery by starting tracking when alarm is due to go off
+            long startTime = mSmartAlarm.getTime().getTime();
+
+            AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+            alarmManager.set(
+                    AlarmManager.RTC_WAKEUP,
+                    startTime,
+                    "SmartAlarm",
+                    this,
+                    null
+            );
+        }else{
+            //Clear the insurance alarm
+            AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+            alarmManager.cancel(this);
+
+            //Reconfigure autostart if necessary
+            configureAutostart();
         }
     }
 
