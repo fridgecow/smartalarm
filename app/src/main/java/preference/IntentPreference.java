@@ -11,19 +11,28 @@ import android.util.AttributeSet;
 
 public class IntentPreference extends WearPreference {
     String mIntent;
+    Boolean mService = false;
 
     public IntentPreference(Context context, AttributeSet attrs){
         super(context, attrs);
-        final int defResId = attrs.getAttributeResourceValue(NAMESPACE_ANDROID, "action", -1);
+        int defResId = attrs.getAttributeResourceValue(NAMESPACE_ANDROID, "action", -1);
         if(defResId != -1){
             mIntent = context.getResources().getString(defResId);
         }else{
             mIntent = attrs.getAttributeValue(NAMESPACE_ANDROID, "action");
         }
+
+        if(getKey().equals("service")){
+            mService = true;
+        }
     }
 
     @Override
     void onPreferenceClick(@NonNull Context context) {
-        context.startActivity(new Intent(mIntent));
+        if(!mService) {
+            context.startActivity(new Intent(mIntent));
+        }else{
+            context.startService(new Intent(mIntent));
+        }
     }
 }

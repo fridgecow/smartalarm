@@ -191,7 +191,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                     configureAlarm();
                 }else if(key.equals("autostart_time") || key.equals("autostart_use")){
                     configureAutostart();
-                }else if(key.equals("email")){
+                }else if(key.equals("email") || key.equals("resend-confirm")){
                     confirmEmail();
                 }
             }
@@ -232,7 +232,9 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(intent == null || intent.getStringExtra("task") == null) {
+        if(intent != null && intent.getAction() != null && intent.getAction().equals("confirm-email")){
+            confirmEmail();
+        }else if(intent == null || intent.getStringExtra("task") == null) {
             recordLoop();
         }else{
             String task = intent.getStringExtra("task");
@@ -600,7 +602,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         }
     }
 
-    private void confirmEmail(){
+    public void confirmEmail(){
         final String email = mPreferences.getString("email", "");
         if(!email.equals("")){
             Map<String, String> params = new HashMap<>();

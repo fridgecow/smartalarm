@@ -110,4 +110,5 @@
     <string name="datapoint_forceaccurate_title">Force Accurate Timing</string>
     <string name="datapoint_forceaccurate_on">Enabled</string>
     <string name="datapoint_forceaccurate_off">Disabled</string>
+    <string name="confirmation_resend">Resend Confirmation Email</string>
 </resources>

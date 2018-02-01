@@ -32,14 +32,14 @@
             android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
         <service
             android:name=".TrackerService"
-            android:enabled="true" />
+            android:enabled="true">
+        </service>
 
         <activity
             android:name=".SettingsActivity"

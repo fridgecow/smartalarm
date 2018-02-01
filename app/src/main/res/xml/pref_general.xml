@@ -61,6 +61,12 @@
             android:defaultValue=""
             android:icon="@drawable/ic_mail"
             />
+        <SwitchPreference
+            android:title="@string/confirmation_resend"
+            android:summaryOn=""
+            android:summaryOff=""
+            android:key="resend-confirm"
+            android:defaultValue="false" />
 
         <SwitchPreference
             android:key="auto_export"
