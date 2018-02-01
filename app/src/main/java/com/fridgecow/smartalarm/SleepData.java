@@ -320,10 +320,8 @@ public class SleepData {
         }
     }
 
-    public boolean getSleepingAt(int index){
-        if(getDataLength() != 0) {
-            return getSleepingAt(getTimeAt(index));
-        }
+    public boolean getSleepingAt(int index) {
+        return getDataLength() != 0 && getSleepingAt(getTimeAt(index));
     }
 
     public boolean getSleepingAt(double time){
