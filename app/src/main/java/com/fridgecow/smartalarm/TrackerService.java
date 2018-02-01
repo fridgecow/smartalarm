@@ -612,15 +612,23 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             }
 
             //Setup recurring alert
+            AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+
             Intent alarmIntent = new Intent(this, TrackerService.class);
             alarmIntent.putExtra("task", "alarm");
 
+            //Clear current alerts, if they exist
+            PendingIntent pendingIntent = PendingIntent.getService(this, 5, alarmIntent, PendingIntent.FLAG_NO_CREATE);
+            if (pendingIntent != null) {
+                alarmManager.cancel(pendingIntent);
+            }
+
+            //Set up the new alart
             PendingIntent alarmPendingIntent = PendingIntent.getService(
                     this,
                     5,
                     alarmIntent,
                     0);
-            AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
             alarmManager.setRepeating(
                     AlarmManager.RTC_WAKEUP,
                     pollingStart,
@@ -630,6 +638,16 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             Log.d(TAG, "Alarm set for "+mSmartAlarm.getTime()+", polling will start "+(new Date(pollingStart)));
         }else{
             mSmartAlarm = null;
+
+
+            //Clear current alerts, if they exist
+            AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+            Intent alarmIntent = new Intent(this, TrackerService.class);
+            alarmIntent.putExtra("task", "alarm");
+            PendingIntent pendingIntent = PendingIntent.getService(this, 5, alarmIntent, PendingIntent.FLAG_NO_CREATE);
+            if (pendingIntent != null) {
+                alarmManager.cancel(pendingIntent);
+            }
         }
     }
 
