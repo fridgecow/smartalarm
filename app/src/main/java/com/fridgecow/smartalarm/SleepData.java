@@ -275,6 +275,10 @@ public class SleepData {
     }
 
     public double getTimeAt(int index){
+        if(mSleepMotion.size() == 0){
+            return 0;
+        }
+
         if(index < 0){
             return mSleepMotion.get(0).getX();
         }else if(index >= mSleepMotion.size()){
@@ -317,7 +321,9 @@ public class SleepData {
     }
 
     public boolean getSleepingAt(int index){
-        return getSleepingAt(getTimeAt(index));
+        if(getDataLength() != 0) {
+            return getSleepingAt(getTimeAt(index));
+        }
     }
 
     public boolean getSleepingAt(double time){

@@ -255,6 +255,9 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
         triggerIFTTT(TRIGGER_ALARM);
 
+        //Reconfigure alarm for the next day
+
+
         //We're done
         stop();
     }
@@ -553,7 +556,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
             //Ensure alarm delivery by starting tracking when alarm is due to go off
             Calendar startTime = (Calendar) mSmartAlarm.clone();
-            startTime.set(Calendar.MINUTE, startTime.get(Calendar.MINUTE) - mPreferences.getInt("datapoint_rate", 1));
+            startTime.set(Calendar.MINUTE, startTime.get(Calendar.MINUTE) - mPreferences.getInt("datapoint_rate", 1) - 1);
 
             AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
             alarmManager.set(
