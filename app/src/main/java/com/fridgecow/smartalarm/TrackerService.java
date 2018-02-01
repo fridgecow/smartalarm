@@ -187,7 +187,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         mPreferenceListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
             @Override
             public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                if(key.equals("smartalarm_time")){
+                if(key.equals("smartalarm_time") || key.equals("smartalarm_use")){
                     configureAlarm();
                 }else if(key.equals("autostart_time") || key.equals("autostart_use")){
                     configureAutostart();
@@ -232,9 +232,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(intent != null && intent.getAction() != null && intent.getAction().equals("confirm-email")){
-            confirmEmail();
-        }else if(intent == null || intent.getStringExtra("task") == null) {
+        if(intent == null || intent.getStringExtra("task") == null) {
             recordLoop();
         }else{
             String task = intent.getStringExtra("task");
@@ -245,6 +243,33 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 exportData();
             }else if(task.equals("playpause")){
                 playPause();
+            }else if(task.equals("alarm")){
+                //Try and create Smart Alarm object if required
+                if(mSmartAlarm == null){
+                    configureAlarm();
+                }
+
+                //Start tracking if it's currently stopped
+                play();
+
+                //Check if alarm should go off
+                if(mSmartAlarm != null){
+                    Date now = Calendar.getInstance().getTime();
+
+                    int window = mPreferences.getInt("smartalarm_window", 30);
+
+                    //Check alarm range
+                    if(now.after(mSmartAlarm.getTime())){
+                        activateAlarm();
+                    }else if(mSmartAlarm.getTime().getTime() - now.getTime() <= window*60*1000){
+                        Log.d(TAG, "In alarm range");
+
+                        if(!mSleepData.getSleepingAt(mSleepData.getDataLength()-1)){
+                            //Light sleep or not sleeping, activate alarm
+                            activateAlarm();
+                        }
+                    }
+                }
             }
         }
 
@@ -252,16 +277,23 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     }
 
     private void activateAlarm() {
-        Intent alarmIntent = new Intent(this, AlarmActivity.class);
-        startActivity(alarmIntent);
+        if(mPreferences.getBoolean("smartalarm_use", true)) {
+            Intent alarmIntent = new Intent(this, AlarmActivity.class);
+            startActivity(alarmIntent);
 
-        triggerIFTTT(TRIGGER_ALARM);
+            triggerIFTTT(TRIGGER_ALARM);
 
-        //Reconfigure alarm for the next day
+            //Reconfigure alarm for the next day
+            Date now = Calendar.getInstance().getTime();
+            if (now.before(mSmartAlarm.getTime())) {
+                configureAlarm(true);
+            } else {
+                configureAlarm(false);
+            }
 
-
-        //We're done
-        stop();
+            //We're done
+            stop();
+        }
     }
 
     @Nullable
@@ -551,30 +583,53 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     }
 
     public void configureAlarm(){
+        configureAlarm(false);
+    }
+
+    public void configureAlarm(boolean nextAlarm){
         //Set up smartalarm
         if(mPreferences.getBoolean("smartalarm_use", true)){
+            //Get next alarm
             mSmartAlarm = TimePreference.parseTime(mPreferences.getInt("smartalarm_time", 700), true);
-            Log.d(TAG, "Alarm set for "+mSmartAlarm.getTime());
 
-            //Ensure alarm delivery by starting tracking when alarm is due to go off
-            Calendar startTime = (Calendar) mSmartAlarm.clone();
-            startTime.set(Calendar.MINUTE, startTime.get(Calendar.MINUTE) - mPreferences.getInt("datapoint_rate", 1) - 1);
+            //If nextAlarm is true, force the alarm to be on the day after
+            if(nextAlarm){
+                mSmartAlarm.set(Calendar.DAY_OF_YEAR, mSmartAlarm.get(Calendar.DAY_OF_YEAR)+1);
+            }
 
-            AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-            alarmManager.set(
-                    AlarmManager.RTC_WAKEUP,
-                    startTime.getTimeInMillis(),
-                    "SmartAlarm",
+            //Ensure alarm delivery by setting wakeups during the window
+
+            //Find time to start polling alarm
+            Date now = Calendar.getInstance().getTime();
+            int window = mPreferences.getInt("smartalarm_window", 30);
+            Calendar smartWindow = (Calendar) mSmartAlarm.clone();
+            smartWindow.set(Calendar.MINUTE, smartWindow.get(Calendar.MINUTE) - window);
+
+            long pollingStart = smartWindow.getTimeInMillis();
+
+            if(smartWindow.before(now)){
+                pollingStart = System.currentTimeMillis();
+            }
+
+            //Setup recurring alert
+            Intent alarmIntent = new Intent(this, TrackerService.class);
+            alarmIntent.putExtra("task", "alarm");
+
+            PendingIntent alarmPendingIntent = PendingIntent.getService(
                     this,
-                    null
-            );
-        }else{
-            //Clear the insurance alarm
+                    5,
+                    alarmIntent,
+                    0);
             AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-            alarmManager.cancel(this);
+            alarmManager.setRepeating(
+                    AlarmManager.RTC_WAKEUP,
+                    pollingStart,
+                    60000,
+                    alarmPendingIntent);
 
-            //Reconfigure autostart if necessary
-            configureAutostart();
+            Log.d(TAG, "Alarm set for "+mSmartAlarm.getTime()+", polling will start "+(new Date(pollingStart)));
+        }else{
+            mSmartAlarm = null;
         }
     }
 
@@ -732,6 +787,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 }
 
                 //If smart alarm, check if "light sleep"
+                /*
                 if(mSmartAlarm != null){
                     Date now = Calendar.getInstance().getTime();
 
@@ -749,6 +805,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                         }
                     }
                 }
+                */
 
                 //Reset
                 mAccelData = false;
