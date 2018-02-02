@@ -50,7 +50,8 @@
             android:label="Number Input" />
         <activity
             android:name=".AlarmActivity"
-            android:label="@string/title_activity_alarm" />
+            android:label="@string/title_activity_alarm"
+            android:theme="@style/Theme.Wearable.Modal" />
         <activity
             android:name=".TextInputActivity"
             android:label="@string/title_activity_text_input" />

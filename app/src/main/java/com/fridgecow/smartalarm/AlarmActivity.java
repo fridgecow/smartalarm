@@ -64,27 +64,14 @@ public class AlarmActivity extends WearableActivity {
     @Override
     protected void onPause(){
         super.onPause();
-    }
 
-    @Override
-    public void onBackPressed() {
-        //Snooze or Dismiss depending on preference
-        if(!mFinished) {
-            if (mPreferences.getBoolean("smartalarm_dismiss_action", true)) {
-                Log.d("AlarmActivity", "Snoozing");
-                snooze();
-            } else {
-                Log.d("AlarmActivity", "Dismissing");
-                dismiss();
-            }
-        }else{
-            finish();
-        }
+        Log.d("AlarmActivity","onPause()");
     }
 
     @Override
     protected void onUserLeaveHint() {
         //super.onUserLeaveHint();
+        Log.d("AlarmActivity", "onUserLeaveHint()");
 
         //Snooze or Dismiss depending on preference
         if(!mFinished) {
@@ -96,6 +83,7 @@ public class AlarmActivity extends WearableActivity {
                 dismiss();
             }
         }else{
+            mVibrator.cancel();
             finish();
         }
     }
