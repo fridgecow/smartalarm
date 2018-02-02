@@ -1,5 +1,6 @@
 package com.fridgecow.smartalarm;
 
+import android.app.ActivityManager;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -63,6 +64,27 @@ public class AlarmActivity extends WearableActivity {
     @Override
     protected void onPause(){
         super.onPause();
+    }
+
+    @Override
+    public void onBackPressed() {
+        //Snooze or Dismiss depending on preference
+        if(!mFinished) {
+            if (mPreferences.getBoolean("smartalarm_dismiss_action", true)) {
+                Log.d("AlarmActivity", "Snoozing");
+                snooze();
+            } else {
+                Log.d("AlarmActivity", "Dismissing");
+                dismiss();
+            }
+        }else{
+            finish();
+        }
+    }
+
+    @Override
+    protected void onUserLeaveHint() {
+        //super.onUserLeaveHint();
 
         //Snooze or Dismiss depending on preference
         if(!mFinished) {
@@ -73,6 +95,8 @@ public class AlarmActivity extends WearableActivity {
                 Log.d("AlarmActivity", "Dismissing");
                 dismiss();
             }
+        }else{
+            finish();
         }
     }
 
