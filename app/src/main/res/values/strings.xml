@@ -92,9 +92,11 @@
     <string name="legend_rem">REM (Estimate)</string>
     <string name="changelog_html">
         New in this version:\n
-        <ul>
-            <li>Fixed a rare crash</li>
-        </ul>
+        &#8226; Alarm background is now black! \n
+        &#8226; The alarm now works differently - it will go off in the alarm window, even when tracking isn\'t running\n
+        &#8226; Datapoints are now collected more loosely, reducing battery drain - old behaviour is available in settings\n
+        &#8226; Email confirmations can now be re-sent easily!\n
+        &#8226; Summaries will always be in the right order.\n
     </string>
     <string name="changelog_donetext">Let\'s Go!</string>
 

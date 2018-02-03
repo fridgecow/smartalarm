@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<android.support.wear.widget.BoxInsetLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -10,57 +10,53 @@
     tools:context="com.fridgecow.smartalarm.ChangelogActivity"
     tools:deviceIds="wear">
 
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:layout_weight="1" />
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            app:boxedEdges="all">
 
-            <android.support.wear.widget.BoxInsetLayout
+            <TextView
+                android:id="@+id/onboarding"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="wrap_content"
+                android:text="@string/onboarding_text"
+                android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                android:visibility="gone" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    app:boxedEdges="all">
-
-                    <TextView
-                        android:id="@+id/onboarding"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/onboarding_text"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Caption" />
-
-                    <TextView
-                        android:id="@+id/textView2"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/changelog_html"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Caption" />
-
-                    <Button
-                        android:id="@+id/changelog_done"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/changelog_donetext" />
-
-                </LinearLayout>
-
-            </android.support.wear.widget.BoxInsetLayout>
-
-            <Space
+            <TextView
+                android:id="@+id/textView2"
                 android:layout_width="match_parent"
-                android:layout_height="1000dp"
-                android:layout_weight="1" />
+                android:layout_height="wrap_content"
+                android:text="@string/changelog_html"
+                android:textAppearance="@style/TextAppearance.AppCompat.Caption" />
+
+            <Button
+                android:id="@+id/changelog_done"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/changelog_donetext" />
 
         </LinearLayout>
 
-    </ScrollView>
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:layout_weight="1" />
 
-</android.support.wear.widget.BoxInsetLayout>
+    </LinearLayout>
+
+</ScrollView>
 
