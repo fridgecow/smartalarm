@@ -4,7 +4,7 @@ android {
     compileSdkVersion 26
     defaultConfig {
         applicationId "com.fridgecow.smartalarm"
-        minSdkVersion 25
+        minSdkVersion 20
         targetSdkVersion 26
         versionCode 180
         versionName "1.8.0"
