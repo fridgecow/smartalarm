@@ -42,7 +42,8 @@ public class SleepSummaryListActivity extends WearableActivity {
                 mSleepFiles.add(file);
             }
         }
-        Collections.reverse(mSleepFiles);
+        Collections.sort(mSleepFiles, Collections.<String>reverseOrder());
+        //Collections.reverse(mSleepFiles);
 
         mAdapter = new SleepSummaryDataAdapter(this, mSleepFiles);
         mLayoutManager = new WearableLinearLayoutManager(this, new CurvingLayoutCallback(this));
