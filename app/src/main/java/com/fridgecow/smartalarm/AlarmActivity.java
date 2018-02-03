@@ -66,6 +66,11 @@ public class AlarmActivity extends WearableActivity {
         super.onPause();
 
         Log.d("AlarmActivity","onPause()");
+
+        if(!mFinished){
+            Log.d("AlarmActivity", "Preventing leaving");
+            ((ActivityManager) getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE)).moveTaskToFront(getTaskId(), 0);
+        }
     }
 
     @Override
