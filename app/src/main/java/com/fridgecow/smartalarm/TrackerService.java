@@ -27,26 +27,17 @@ import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.fridgecow.smartalarm.datarepresentation.SleepData;
+import com.fridgecow.smartalarm.datarepresentation.SleepSummaryData;
+import com.fridgecow.smartalarm.interfaces.CSVable;
 import com.jjoe64.graphview.series.DataPoint;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -74,35 +65,23 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     private static final int API_EMAILCONFIRM = 1;
     private static final int API_EMAILSUMMARYEXPORT = 2;
 
-    //Things that need to be in configuration
-    private static final String OFFLINE_ACC = "sleepdata.csv";
-    private static final String OFFLINE_HRM = "sleephrm.csv";
+    // Things that need to be in configuration
     public static final String SUMMARY_PREFIX = "summary-";
-    private static final double AWAKE_THRESH = 150.0; //Found by trial
 
     private SensorManager mSensorManager;
     private SharedPreferences mPreferences;
 
-    //private double mAccelMax = 0.0; //Temporary maxima
     private boolean mAccelData = false;
-    private double[] mAccelLast = {0.0, 0.0, 0.0}; //Keeps previous sensor value
+    private double[] mAccelLast = {0.0, 0.0, 0.0}; // Keeps previous sensor value
 
-    //private List<DataPoint> mSleepMotion; //Time -> max motion
+    private double mMaxAccel = 0;
+    private double mMaxHR = 0;
+
     private boolean mSleeping;
-    //private int mSleepCount;
-    //private int mAwakeCount = 0;
-    private double mSleepMotionMean = -1;
 
     private Calendar mSmartAlarm;
 
-    //private double mHRMax = 0.0;
-    //private List<DataPoint> mSleepHR; //Time -> max HR
-
     private SleepData mSleepData;
-
-    private int mHRPointsSinceTracked = 0;
-    private int mHRPointsToTrack = 0;
-    private boolean mHRJustTurnedOn;
 
     private NotificationCompat.Builder mNotification;
     private NotificationManager mNotificationManager;
@@ -116,7 +95,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     private class SleepProcessor extends AsyncTask<SleepData, Integer, SleepSummaryData>{
         @Override
         protected SleepSummaryData doInBackground(SleepData[] lists) {
-            //For now, only deal with the first SleepData
+            // For now, only deal with the first SleepData
             SleepData data = lists[0];
             SleepSummaryData summarydata = new SleepSummaryData(data);
             return summarydata;
@@ -124,8 +103,8 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
         @Override
         protected void onPostExecute(SleepSummaryData result){
-            //Store somewhere useful
-            //For now, "useful" is more csv files
+            // Store somewhere useful
+            // For now, "useful" is more csv files
             if(result.size() > 0) {
                 try {
                     result.writeOut(TrackerService.this, SUMMARY_PREFIX + ((long) result.getEnd()));
@@ -153,12 +132,12 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     @Override
     public void onAlarm() {
-        //Start tracking
+        // Start tracking
         play();
     }
 
 
-    //Public interface to bind to this service
+    // Public interface to bind to this service
     public class LocalBinder extends Binder {
         TrackerService getService() {
             // Return this instance of TrackerService so clients can call public methods
@@ -169,21 +148,19 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     @Override
     public void onCreate(){
-        //Initialise values
+        // Initialise values
         mSleepData = new SleepData(this);
-        //mSleepMotion = new ArrayList<>();
-        //mSleepHR = new ArrayList<>();
         mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mQueue = Volley.newRequestQueue(this);
 
-        //Fill SleepMotion
+        // Fill SleepMotion
         try {
             mSleepData.readIn();
         }catch(IOException e){
             Log.d(TAG, "Problem reading offline store");
         }
 
-        //Allow preferences to be changed on-the-fly
+        // Allow preferences to be changed on-the-fly
         mPreferenceListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
             @Override
             public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
@@ -197,37 +174,6 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             }
         };
         mPreferences.registerOnSharedPreferenceChangeListener(mPreferenceListener);
-    }
-
-    private void recordHRFor(int points) {
-        if(mHRPointsToTrack == 0) {
-            mHRPointsToTrack = points;
-            mHRPointsSinceTracked = 0;
-            mHRJustTurnedOn = true;
-        }else{
-            mHRPointsToTrack = Math.max(mHRPointsToTrack, points);
-        }
-
-        //Register sensor
-        if (mPreferences.getBoolean("hrm_use", true)) {
-            Log.d(TAG, "Tracking HR for " + points + " points");
-            Sensor hr = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
-
-            int hrmPoll = Integer.parseInt(mPreferences.getString("hrm_polling_rate", "3"));
-            mSensorManager.registerListener(
-                    this,
-                    hr,
-                    hrmPoll
-            );
-        }
-    }
-
-    private void stopHRRecord(){
-        //De-register sensor
-        Log.d(TAG, "Stopped tracking HR");
-
-        Sensor hr = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
-        mSensorManager.unregisterListener(this, hr);
     }
 
     @Override
@@ -244,28 +190,28 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             }else if(task.equals("playpause")){
                 playPause();
             }else if(task.equals("alarm")){
-                //Try and create Smart Alarm object if required
+                // Try and create Smart Alarm object if required
                 if(mSmartAlarm == null){
                     configureAlarm();
                 }
 
-                //Start tracking if it's currently stopped
+                // Start tracking if it's currently stopped
                 play();
 
-                //Check if alarm should go off
+                // Check if alarm should go off
                 if(mSmartAlarm != null){
                     Date now = Calendar.getInstance().getTime();
 
                     int window = mPreferences.getInt("smartalarm_window", 30);
 
-                    //Check alarm range
+                    // Check alarm range
                     if(now.after(mSmartAlarm.getTime())){
                         activateAlarm();
                     }else if(mSmartAlarm.getTime().getTime() - now.getTime() <= window*60*1000){
                         Log.d(TAG, "In alarm range");
 
                         if(!mSleepData.getSleepingAt(mSleepData.getDataLength()-1)){
-                            //Light sleep or not sleeping, activate alarm
+                            // Light sleep or not sleeping, activate alarm
                             activateAlarm();
                         }
                     }
@@ -283,7 +229,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
             triggerIFTTT(TRIGGER_ALARM);
 
-            //Reconfigure alarm for the next day
+            // Reconfigure alarm for the next day
             Date now = Calendar.getInstance().getTime();
             if (now.before(mSmartAlarm.getTime())) {
                 configureAlarm(true);
@@ -291,7 +237,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 configureAlarm(false);
             }
 
-            //We're done
+            // We're done
             stop();
         }
     }
@@ -306,18 +252,19 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     public void onSensorChanged(SensorEvent event) {
 
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            //Calculate magnitude
+            // Calculate magnitude
             if(mAccelData) {
-                //Calculate magnitude of difference between
-                //now and previous.
+                // Calculate magnitude of difference between
+                // now and previous.
                 double value = 0.0;
                 for(int i = 0; i < mAccelLast.length; i++){
                     value += Math.pow(mAccelLast[i] - event.values[i], 2);
                     mAccelLast[i] = event.values[i];
                 }
-                mSleepData.recordAccelSensor(value);
+
+                mMaxAccel = Math.max(mMaxAccel, value);
             }else{
-                //Set previous
+                // Set previous
                 for(int i = 0; i < mAccelLast.length; i++){
                     mAccelLast[i] = event.values[i];
                 }
@@ -325,16 +272,13 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 mAccelData = true;
             }
         }else if(event.sensor.getType() == Sensor.TYPE_HEART_RATE){
-            if(!mHRJustTurnedOn) {
-                //Collect HR info
-                mSleepData.recordHRSensor(event.values[0], mPreferences.getBoolean("hrm_smart", true));
-            }
+            mMaxHR = Math.max(mMaxHR, event.values[0]);
         }
     }
 
     @Override
     public void onDestroy(){
-        //Write out to file
+        // Write out to file
         try {
             mSleepData.writeOut();
         }catch(IOException e){
@@ -346,7 +290,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
-        //pass
+        // pass
     }
 
     /* Class API */
@@ -363,39 +307,12 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         exportData(mSleepData);
     }
 
-    public void exportData(SleepData data){
-        //Get email address
-        final String email = mPreferences.getString("email", "");
-        if(email.equals("")) {
-            Toast.makeText(this, "Please input an email address", Toast.LENGTH_SHORT).show();
-        }else {
-            Map<String, String> params = new HashMap<>();
+    public void exportData(CSVable data){
+        Map<String, String> params = new HashMap<>();
+        params.put("csv", data.getCSV());
+        params.put("tz", TimeZone.getDefault().getID()); // Help server interpret timestamp
 
-            params.put("email", email);
-
-            params.put("csv", mSleepData.getCSV(mPreferences.getBoolean("hrm_use", true)));
-
-            //Put TimeZone so that server knows how to interpret UTC
-            params.put("tz", TimeZone.getDefault().getID());
-
-            apiCall(API_EMAILEXPORT, params);
-        }
-    }
-
-    public void exportData(SleepSummaryData data){
-        //Get email address
-        final String email = mPreferences.getString("email", "");
-        if(email.equals("")) {
-            Toast.makeText(this, "Please input an email address", Toast.LENGTH_SHORT).show();
-        }else {
-            Map<String, String> params = new HashMap<>();
-
-            params.put("email", email);
-            params.put("csv", data.getCSV());
-            params.put("tz", TimeZone.getDefault().getID());
-
-            apiCall(API_EMAILSUMMARYEXPORT, params);
-        }
+        apiCall(API_EMAILEXPORT, params);
     }
 
     public void pause(){
@@ -403,11 +320,11 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             mRunning = false;
             mPaused = true;
 
-            //Unbind service listeners
+            // Unbind service listeners
             mSensorManager.unregisterListener(this);
 
-            //Stop minute-by-minute tracking
-            if(!mPreferences.getBoolean("datapoint_forceaccurate", false)) {
+            // Stop minute-by-minute tracking
+            if(!mPreferences.getBoolean("datapoint_forceaccurate", true)) {
                 mTrackingHandler.removeCallbacks(mTrackingRunnable);
             }else{
                 Intent intent = new Intent(this, TrackerService.class);
@@ -418,7 +335,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 }
             }
 
-            //Set notification
+            // Set notification
             Intent appIntent = new Intent(this, MainActivity.class);
             PendingIntent appPending = PendingIntent.getActivity(this,  0, appIntent, 0);
 
@@ -437,13 +354,13 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
             mNotification = new NotificationCompat.Builder(this, "sleeptracking")
                     .setContentTitle("Sleep Tracking Paused")
-                    .setSmallIcon(R.mipmap.ic_launcher_foreground) //(icon is required)
+                    .setSmallIcon(R.mipmap.ic_launcher_foreground) // (icon is required)
                     .setContentIntent(appPending)
                     .addAction(ppAction);
 
             mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Get back to bed!").build());
 
-            //Clear foreground
+            // Clear foreground
             stopForeground(false);
         }
     }
@@ -452,13 +369,13 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         if(!mRunning){
             mRunning = true;
 
-            if(!mPaused){ //Perform a reset
+            if(!mPaused){ // Perform a reset
                 reset();
             }
             mPaused = false;
             mSleeping = false;
 
-            //Register sensors
+            // Register sensors
             mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
             Sensor accel = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -474,30 +391,25 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             if(mPreferences.getBoolean("hrm_use", true)) {
                 Log.d(TAG, "Using HRM");
 
-                //Check permissions
+                // Check permissions
                 int permissionCheck = ContextCompat.checkSelfPermission(this,
                         Manifest.permission.BODY_SENSORS);
 
                 if(permissionCheck == PackageManager.PERMISSION_GRANTED){
-                    if(!mPreferences.getBoolean("hrm_smart", true)) {
-                        //Register the sensor unconditionally
-                        int hrmPoll = Integer.parseInt(mPreferences.getString("hrm_polling_rate", "3"));
-                        mSensorManager.registerListener(
-                                this,
-                                hr,
-                                hrmPoll
-                        );
-                    }else{
-                        //Get some initial data
-                        recordHRFor(3);
-                    }
+                    // Register the sensor unconditionally
+                    int hrmPoll = Integer.parseInt(mPreferences.getString("hrm_polling_rate", "3"));
+                    mSensorManager.registerListener(
+                            this,
+                            hr,
+                            hrmPoll
+                    );
                 }
             }
 
-            //Configure Smart Alarm
+            // Configure Smart Alarm
             configureAlarm();
 
-            //Run in foreground
+            // Run in foreground
             Intent launchAppIntent = new Intent(this, MainActivity.class);
             PendingIntent pendingIntent =
                     PendingIntent.getActivity(this, 0, launchAppIntent, 0);
@@ -516,19 +428,19 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                     ppPending).extend(actionExtender).build();
 
 
-            //Set foreground notification
+            // Set foreground notification
             mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             mNotification = new NotificationCompat.Builder(this, "sleeptracking")
                     .setContentTitle("Sleep Tracking Enabled")
-                    .setSmallIcon(R.mipmap.ic_launcher_foreground) //(icon is required)
+                    .setSmallIcon(R.mipmap.ic_launcher_foreground) // (icon is required)
                     .setContentIntent(pendingIntent)
                     .addAction(ppAction);
 
             Notification notification = mNotification.setContentText("You're not sleeping").build();
             startForeground(ONGOING_NOTIFICATION_ID, notification);
 
-            //Ping ourselves every datapoint_rate minutes
-            if(!mPreferences.getBoolean("datapoint_forceaccurate", false)){
+            // Ping ourselves every datapoint_rate minutes
+            if(!mPreferences.getBoolean("datapoint_forceaccurate", true)){
                 mTrackingHandler.post(mTrackingRunnable);
             }else {
                 PendingIntent pingIntent = PendingIntent.getService(this, 0, new Intent(this, TrackerService.class), 0);
@@ -562,21 +474,21 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         mPaused = false;
 
         if(mSleepData.getDataLength() > 0) {
-            //Auto export?
+            // Auto export?
             if (mPreferences.getBoolean("auto_export", true)) {
                 exportData();
             }
 
-            //Proccess sleep data
+            // Proccess sleep data
             new SleepProcessor().execute(mSleepData);
         }
 
-        //Stop service (from user perspective)
+        // Stop service (from user perspective)
         stopForeground(true);
     }
 
     public void reset(){
-        //Empty offline store and mAccelData etc
+        // Empty offline store and mAccelData etc
         mSleepData.reset();
         mAccelData = false;
 
@@ -587,19 +499,19 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     }
 
     public void configureAlarm(boolean nextAlarm){
-        //Set up smartalarm
+        // Set up smartalarm
         if(mPreferences.getBoolean("smartalarm_use", true)){
-            //Get next alarm
+            // Get next alarm
             mSmartAlarm = TimePreference.parseTime(mPreferences.getInt("smartalarm_time", 700), true);
 
-            //If nextAlarm is true, force the alarm to be on the day after
+            // If nextAlarm is true, force the alarm to be on the day after
             if(nextAlarm){
                 mSmartAlarm.set(Calendar.DAY_OF_YEAR, mSmartAlarm.get(Calendar.DAY_OF_YEAR)+1);
             }
 
-            //Ensure alarm delivery by setting wakeups during the window
+            // Ensure alarm delivery by setting wakeups during the window
 
-            //Find time to start polling alarm
+            // Find time to start polling alarm
             Date now = Calendar.getInstance().getTime();
             int window = mPreferences.getInt("smartalarm_window", 30);
             Calendar smartWindow = (Calendar) mSmartAlarm.clone();
@@ -611,19 +523,19 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 pollingStart = System.currentTimeMillis();
             }
 
-            //Setup recurring alert
+            // Setup recurring alert
             AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
 
             Intent alarmIntent = new Intent(this, TrackerService.class);
             alarmIntent.putExtra("task", "alarm");
 
-            //Clear current alerts, if they exist
+            // Clear current alerts, if they exist
             PendingIntent pendingIntent = PendingIntent.getService(this, 5, alarmIntent, PendingIntent.FLAG_NO_CREATE);
             if (pendingIntent != null) {
                 alarmManager.cancel(pendingIntent);
             }
 
-            //Set up the new alart
+            // Set up the new alart
             PendingIntent alarmPendingIntent = PendingIntent.getService(
                     this,
                     5,
@@ -640,7 +552,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             mSmartAlarm = null;
 
 
-            //Clear current alerts, if they exist
+            // Clear current alerts, if they exist
             AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
             Intent alarmIntent = new Intent(this, TrackerService.class);
             alarmIntent.putExtra("task", "alarm");
@@ -653,7 +565,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     public void configureAutostart(){
         if(mPreferences.getBoolean("autostart_use", false)){
-            //Set up alarm for tracking
+            // Set up alarm for tracking
 
             long startTime = TimePreference.parseTime(
                     mPreferences.getInt("autostart_time", 1900),
@@ -669,39 +581,39 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                     null
             );
         }else{
-            //Clear alarm for tracking
+            // Clear alarm for tracking
             AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
             alarmManager.cancel(this);
         }
     }
 
     public void confirmEmail(){
-        final String email = mPreferences.getString("email", "");
-        if(!email.equals("")){
-            Map<String, String> params = new HashMap<>();
-            params.put("email", email);
-            params.put("add", "");
-
-            apiCall(API_EMAILCONFIRM, params);
-        }
+        apiCall(API_EMAILCONFIRM, null);
     }
 
     private void apiCall(int type, final Map<String, String> params){
-        String url = "https://www.fridgecow.com/smartalarm/email.php";
+        final String baseUrl = mPreferences.getString("export_server", "https://smartalarm.fridgecow.com");
+        final String email = mPreferences.getString("email", "");
+        String url = baseUrl.replace(';', ':') + "/v1/";
+
+        if(email.equals("")){
+            Toast.makeText(mContext, "Error: no email provided.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        switch (type) {
+            case API_EMAILCONFIRM:
+                url += "add/" + email;
+                break;
+            case API_EMAILEXPORT:
+            case API_EMAILSUMMARYEXPORT:
+                url += "csv/" + email;
+                break;
+        }
 
         StringRequest postRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Toast.makeText(mContext, response, Toast.LENGTH_SHORT).show();
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(mContext, "Error! "+error.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                }
+                response -> Toast.makeText(mContext, response, Toast.LENGTH_SHORT).show(),
+                error -> Toast.makeText(mContext, "Error: "+error.getMessage(), Toast.LENGTH_SHORT).show()
         ){
             @Override
             protected Map<String, String> getParams() {
@@ -713,7 +625,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     }
 
     public void triggerIFTTT(final String type){
-        //Get maker key
+        // Get maker key
         final String ifttt_key = mPreferences.getString("ifttt_key", "");
         if(ifttt_key.equals("")) {
             return;
@@ -722,29 +634,21 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         String url = "https://maker.ifttt.com/trigger/smartalarm_"+type+"/with/key/"+ifttt_key;
 
         StringRequest postRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // response
-                        Log.d(TAG, "IFTTT: "+response);
-                    }
+                response -> {
+                    // response
+                    Log.d(TAG, "IFTTT: "+response);
                 },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // error
-                        Log.d(TAG, "Error with IFTTT! "+error.getMessage());
-                    }
+                error -> {
+                    // error
+                    Log.d(TAG, "Error with IFTTT! "+error.getMessage());
                 }
         ) {
             @Override
             protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<String, String>();
+                // Put different params based on type
+                // No params necessary right now!
 
-                //Put different params based on type
-                //No params necessary right now!
-
-                return params;
+                return new HashMap<>();
             }
         };
         mQueue.add(postRequest);
@@ -754,79 +658,31 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     private void recordLoop(){
         if(mRunning){
             if(mAccelData) {
+                mSleepData.recordAccelSensor(mMaxAccel);
                 Log.d(TAG, "Tracking Runnable doing work");
-                mSleepData.recordPoint();
 
-                //Deal with Smart HR tracking
-                if(mPreferences.getBoolean("hrm_smart", true)){
-                    if(mHRPointsToTrack > 0){
-                        mHRPointsToTrack--;
-                        mHRJustTurnedOn = false;
-
-                        if(mHRPointsToTrack == 0){
-                            stopHRRecord();
-                        }
-                    }
-
-                    mHRPointsSinceTracked++;
-                    Log.d(TAG, mHRPointsSinceTracked+" points since HR tracked");
-
-                    if(mHRPointsSinceTracked >= 10){
-                        if(!mSleeping){ //Interesting times - track every 10 minutes for 5 minutes
-                            recordHRFor(5);
-                        }else{ //Track every 10 minutes for 1 minute
-                            recordHRFor(5);
-                        }
-                    }
-                }
-
-                //Check if sleeping
+                // Check if sleeping
                 boolean sleeping = mSleepData.getSleepingAt(mSleepData.getDataLength()-1);
                 if(sleeping){
                     if(!mSleeping){
                         mSleeping = true;
                         triggerIFTTT(TRIGGER_ASLEEP);
                         mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("You're asleep!").build());
-
-                        //Record for 2 minutes
-                        if(mPreferences.getBoolean("hrm_smart", true)){
-                            recordHRFor(2);
-                        }
                     }
                 }else if(mSleeping){
                     mSleeping = false;
                     mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Good morning!").build());
                     triggerIFTTT(TRIGGER_AWAKE);
-
-                    //Record for 2 minutes
-                    if(mPreferences.getBoolean("hrm_smart", true)){
-                        recordHRFor(2);
-                    }
                 }
 
-                //If smart alarm, check if "light sleep"
-                /*
-                if(mSmartAlarm != null){
-                    Date now = Calendar.getInstance().getTime();
-
-                    int window = mPreferences.getInt("smartalarm_window", 30);
-
-                    //Check alarm range
-                    if(now.after(mSmartAlarm.getTime())){
-                        activateAlarm();
-                    }else if(mSmartAlarm.getTime().getTime() - now.getTime() <= window*60*1000){
-                        Log.d(TAG, "In alarm range");
-
-                        if(!sleeping){
-                            //Light sleep or not sleeping, activate alarm
-                            activateAlarm();
-                        }
-                    }
-                }
-                */
-
-                //Reset
+                // Reset
                 mAccelData = false;
+                mMaxAccel = 0;
+            }
+
+            if(mMaxHR > 0){
+                mSleepData.recordHRSensor(mMaxHR);
+                mMaxHR = 0;
             }
         }else{
             Log.d(TAG, "Tracker Paused, not collecting data");

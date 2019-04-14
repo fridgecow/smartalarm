@@ -19,12 +19,7 @@ public class ChangelogActivity extends WearableActivity {
         mButton = findViewById(R.id.changelog_done);
         onBoarding = findViewById(R.id.onboarding);
 
-        mButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                finish();
-            }
-        });
+        mButton.setOnClickListener(view -> finish());
 
         if(getIntent().getBooleanExtra("first", false)){
             onBoarding.setVisibility(View.VISIBLE);

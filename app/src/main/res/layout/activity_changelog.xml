@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/dark_grey"
+    android:background="@color/black"
     android:padding="@dimen/box_inset_layout_padding"
     tools:context="com.fridgecow.smartalarm.ChangelogActivity"
     tools:deviceIds="wear">
@@ -34,7 +34,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/onboarding_text"
                 android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-                android:visibility="gone" />
+                android:visibility="visible" />
 
             <TextView
                 android:id="@+id/textView2"

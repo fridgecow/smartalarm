@@ -7,12 +7,13 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.wearable.activity.WearableActivity;
-import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 
+import com.fridgecow.smartalarm.views.CircularInputView;
+
 import java.util.Calendar;
+import java.util.Locale;
 
 import preference.TimePreference;
 
@@ -33,6 +34,7 @@ public class TimeInputActivity extends WearableActivity {
     private TextView mHourText;
     private TextView mMinuteText;
     private TextView mTitleView;
+    private Button mDoneButton;
     private CircularInputView mCircularInput;
 
     private boolean mEditingHours = true;
@@ -46,14 +48,16 @@ public class TimeInputActivity extends WearableActivity {
         mMinuteText = findViewById(R.id.timeinput_minutes);
         mTitleView = findViewById(R.id.number_title);
         mCircularInput = findViewById(R.id.circInput);
+        mDoneButton = findViewById(R.id.timeinput_done);
 
         loadIntentExtras();
 
         mTitleView.setText(mTitle);
         setEditingHours(true);
 
-        mHourText.setText(String.format("%02d", mValue.get(Calendar.HOUR_OF_DAY)));
-        mMinuteText.setText(String.format("%02d", mValue.get(Calendar.MINUTE)));
+        final Locale locale = new Locale("en");
+        mHourText.setText(String.format(locale, "%02d", mValue.get(Calendar.HOUR_OF_DAY)));
+        mMinuteText.setText(String.format(locale, "%02d", mValue.get(Calendar.MINUTE)));
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -61,10 +65,10 @@ public class TimeInputActivity extends WearableActivity {
             @Override
             public void onChange(int number){
                 if(mEditingHours) {
-                    mHourText.setText(String.format("%02d", number));
+                    mHourText.setText(String.format(locale, "%02d", number));
                     mValue.set(Calendar.HOUR_OF_DAY, number);
                 }else{
-                    mMinuteText.setText(String.format("%02d", number));
+                    mMinuteText.setText(String.format(locale, "%02d", number));
                     mValue.set(Calendar.MINUTE, number);
                 }
 
@@ -80,33 +84,22 @@ public class TimeInputActivity extends WearableActivity {
             }
         });
 
-        mHourText.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                setEditingHours(true);
-            }
-        });
-
-        mMinuteText.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                setEditingHours(false);
-            }
-        });
+        mHourText.setOnClickListener(view -> setEditingHours(true));
+        mMinuteText.setOnClickListener(view -> setEditingHours(false));
+        mDoneButton.setOnClickListener(view -> finish());
     }
 
     private void setEditingHours(boolean editHours){
         mEditingHours = editHours;
 
+        mCircularInput.setMin(0);
         if(editHours){
-            mCircularInput.setMin(0);
             mCircularInput.setMax(23);
             mCircularInput.setValue(mValue.get(Calendar.HOUR_OF_DAY));
 
             mHourText.setTextColor(Color.WHITE);
             mMinuteText.setTextColor(Color.GRAY);
         }else{
-            mCircularInput.setMin(0);
             mCircularInput.setMax(59);
             mCircularInput.setValue(mValue.get(Calendar.MINUTE));
 

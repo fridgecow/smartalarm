@@ -1,4 +1,4 @@
-package com.fridgecow.smartalarm;
+package com.fridgecow.smartalarm.datarepresentation;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -6,6 +6,9 @@ import android.support.wear.widget.WearableRecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.fridgecow.smartalarm.SleepSummaryActivity;
+import com.fridgecow.smartalarm.views.SleepView;
 
 import java.io.IOException;
 import java.util.List;

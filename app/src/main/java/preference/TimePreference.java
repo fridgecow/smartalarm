@@ -1,6 +1,5 @@
 package preference;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -8,8 +7,6 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 
-import com.fridgecow.smartalarm.MainActivity;
-import com.fridgecow.smartalarm.NumberInputActivity;
 import com.fridgecow.smartalarm.TimeInputActivity;
 
 import java.util.Calendar;
@@ -28,7 +25,7 @@ public class TimePreference extends WearPreference {
     public TimePreference(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        //Get XML args
+        // Get XML args
         final int defResId = attrs.getAttributeResourceValue(NAMESPACE_ANDROID, "defaultValue", -1);
         if(defResId != -1){
             mDefault = context.getResources().getInteger(defResId);
@@ -43,7 +40,7 @@ public class TimePreference extends WearPreference {
     void onPreferenceClick(@NonNull Context context) {
         mTime = parseTime(getCurrentValue(context));
         
-        //Launch for hours
+        // Launch for hours
         Intent hourInput = TimeInputActivity.createIntent(
                 context,
                 getKey(),
@@ -60,7 +57,7 @@ public class TimePreference extends WearPreference {
         try {
             return preferences.getInt(getKey(), mDefault);
         }catch(ClassCastException e){
-            //A string was put here instead of an int - forget about it!
+            // A string was put here instead of an int - forget about it!
             return mDefault;
         }
     }
@@ -83,7 +80,7 @@ public class TimePreference extends WearPreference {
         ret.set(Calendar.MINUTE, minute);
         ret.set(Calendar.SECOND, 0);
 
-        //If we're after the alarm, set the alarm for tomorrow
+        // If we're after the alarm, set the alarm for tomorrow
         if(inTheFuture) {
             Date now = Calendar.getInstance().getTime();
             if (now.after(ret.getTime())) {

@@ -5,12 +5,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/dark_grey"
+    android:background="@color/black"
     android:padding="@dimen/box_inset_layout_padding"
     tools:context="com.fridgecow.smartalarm.NumberInputActivity"
     tools:deviceIds="wear">
 
-    <com.fridgecow.smartalarm.CircularInputView
+    <com.fridgecow.smartalarm.views.CircularInputView
         android:id="@+id/circInput"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -29,8 +29,7 @@
                 android:id="@+id/number_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical|center"
-                android:text="TextView" />
+                android:gravity="center_vertical|center" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -63,10 +62,18 @@
                     android:text="TextView"
                     android:textAppearance="@style/TextAppearance.AppCompat.Display1"
                     tools:text="MM" />
+
             </LinearLayout>
+
+            <Button
+                android:id="@+id/timeinput_done"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Done" />
 
         </LinearLayout>
 
-    </com.fridgecow.smartalarm.CircularInputView>
+    </com.fridgecow.smartalarm.views.CircularInputView>
 </android.support.wear.widget.BoxInsetLayout>
 

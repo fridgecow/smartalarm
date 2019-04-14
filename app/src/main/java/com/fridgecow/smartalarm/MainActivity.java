@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.wearable.activity.WearableActivity;
@@ -62,7 +63,7 @@ public class MainActivity extends WearableActivity {
             mBound = true;
             Log.d(TAG,"Bound to tracking service.");
 
-            //Update graphics
+            // Update graphics
             updateViews();
         }
 
@@ -75,15 +76,27 @@ public class MainActivity extends WearableActivity {
         }
     };
 
+    private void startAndBindTrackingService(){
+        if (mBound || mBinding) return;
+
+        // Start tracking service and bind to it
+        Intent service = new Intent(this, TrackerService.class);
+        service.putExtra("task", "start");
+        startService(service);
+
+        mBinding = true;
+        bindService(service, mConnection, 0);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        //Check if this is the first time launching this version
+        // Check if this is the first time launching this version
         if(mPreferences.getString("last_version", "").equals("")){
-            //Completely new user
+            // Completely new user
             mPreferences.edit().putString("last_version", getString(R.string.versionName)).apply();
 
             Intent onboarding = new Intent("changelog");
@@ -95,6 +108,8 @@ public class MainActivity extends WearableActivity {
             startActivity(new Intent("changelog"));
         }
 
+        startAndBindTrackingService();
+
         mTextView = findViewById(R.id.text);
         mStopButton = findViewById(R.id.button2);
         mResetButton = findViewById(R.id.button_reset);
@@ -105,89 +120,70 @@ public class MainActivity extends WearableActivity {
         mGraphNoData = findViewById(R.id.nodata);
         mSummaryButton = findViewById(R.id.view_summaries);
 
-        //Start tracking service and bind to it
-        Intent service = new Intent(this, TrackerService.class);
-        service.putExtra("task", "start");
-        startService(service);
-        mBinding = true;
-        bindService(service, mConnection, 0);
-
-        mSettingsButton.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view) {
-                Intent settings = new Intent(view.getContext(), SettingsActivity.class);
-                startActivity(settings);
-            }
+        mSettingsButton.setOnClickListener(view -> {
+            Intent settings = new Intent(view.getContext(), SettingsActivity.class);
+            startActivity(settings);
         });
 
-        mSummaryButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                view.getContext().startActivity(new Intent(view.getContext(), SleepSummaryListActivity.class));
+        mSummaryButton.setOnClickListener(view -> view.getContext().startActivity(new Intent(view.getContext(), SleepSummaryListActivity.class)));
+
+        // TODO: Set these up after bound, and eliminate mBound checks.
+        mExportButton.setOnClickListener(view -> {
+            if(!mBound) {
+                startAndBindTrackingService();
+                return;
             }
+
+            mService.exportData();
         });
 
-        //TODO: Set these up after bound, and eliminate mBound checks.
-        mExportButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(mBound){
-                    mService.exportData();
+        mStopButton.setOnClickListener(view -> {
+            if(!mBound) {
+                startAndBindTrackingService();
+                return;
+            }
+
+            // Check for required permissions
+            if(mPreferences.getBoolean("hrm_use", true)) {
+                int permissionCheck = ContextCompat.checkSelfPermission(view.getContext(),
+                        Manifest.permission.BODY_SENSORS);
+                if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(getActivity(),
+                            new String[]{Manifest.permission.BODY_SENSORS},
+                            PERMISSION_REQUEST_SENSOR);
                 }
             }
+
+            mService.playPause();
+            updateViews();
         });
 
-        mStopButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(mBound){
-                    //Check for required permissions
-                    if(mPreferences.getBoolean("hrm_use", true)) {
-                        int permissionCheck = ContextCompat.checkSelfPermission(view.getContext(),
-                                Manifest.permission.BODY_SENSORS);
-                        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-                            ActivityCompat.requestPermissions(getActivity(),
-                                    new String[]{Manifest.permission.BODY_SENSORS},
-                                    PERMISSION_REQUEST_SENSOR);
-                        }
-                    }
+        mResetButton.setOnClickListener(view -> {
+            if(!mBound) {
+                startAndBindTrackingService();
+                return;
+            }
 
-                    mService.playPause();
-                    updateViews();
-                }
+            if(mService.isRunning() || mService.isPaused()){
+                mService.stop();
+                updateViews();
+            } else {
+                mService.reset();
+                updateGraph();
             }
         });
 
-        mResetButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(mBound) {
-                    if(mService.isRunning() || mService.isPaused()){
-                        mService.stop();
-                        updateViews();
-                    } else {
-                        mService.reset();
-                        updateGraph();
-                    }
-                }
-            }
-        });
-
-        final View.OnLongClickListener ToolTipShower = new View.OnLongClickListener(){
-
-            @Override
-            public boolean onLongClick(View view) {
-                final ImageButton ib = (ImageButton) view;
-                Toast.makeText(view.getContext(), ib.getContentDescription(), Toast.LENGTH_SHORT).show();
-                return true;
-            }
+        final View.OnLongClickListener ToolTipShower = view -> {
+            final ImageButton ib = (ImageButton) view;
+            Toast.makeText(view.getContext(), ib.getContentDescription(), Toast.LENGTH_SHORT).show();
+            return true;
         };
+
         mResetButton.setOnLongClickListener(ToolTipShower);
         mStopButton.setOnLongClickListener(ToolTipShower);
         mSettingsButton.setOnLongClickListener(ToolTipShower);
 
-
-        //Style graph
+        // Style graph
         mAccelData = new LineGraphSeries<>();
         mHRData = new LineGraphSeries<>();
 
@@ -212,19 +208,18 @@ public class MainActivity extends WearableActivity {
                 if(isValueX){
                     return super.formatLabel(value, true);
                 }else{
-                    return ""; //Show nothing
+                    return ""; // Show nothing
                 }
             }
         });
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
             case PERMISSION_REQUEST_SENSOR: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    //Do nothing, for now
+                    // Do nothing, for now
                 }
             }
         }
@@ -233,8 +228,10 @@ public class MainActivity extends WearableActivity {
     @Override
     public void onResume(){
         super.onResume();
+
         updateViews();
     }
+
     @Override
     public void onDestroy(){
         super.onDestroy();
@@ -254,21 +251,22 @@ public class MainActivity extends WearableActivity {
         mAccelData.resetData(mService.getSleepMotion());
         mHRData.resetData(mService.getSleepHR());
 
-        //Is there actually any data?
-        if(!mAccelData.isEmpty()) {
-            mGraphActions.setVisibility(View.VISIBLE);
-            mGraphNoData.setVisibility(View.GONE);
-
-            //Set Graph range
-            mGraphView.getViewport().setMaxY(mAccelData.getHighestValueY());
-            mGraphView.getViewport().setMinX(mAccelData.getLowestValueX());
-            mGraphView.getViewport().setMaxX(mAccelData.getHighestValueX());
-
-            mGraphView.getSecondScale().setMaxY(mHRData.getHighestValueY());
-        }else{
+        // Is there actually any data?
+        if(mAccelData.isEmpty()) {
             mGraphActions.setVisibility(View.GONE);
             mGraphNoData.setVisibility(View.VISIBLE);
+            return;
         }
+
+        mGraphActions.setVisibility(View.VISIBLE);
+        mGraphNoData.setVisibility(View.GONE);
+
+        // Set Graph range
+        mGraphView.getViewport().setMaxY(mAccelData.getHighestValueY());
+        mGraphView.getViewport().setMinX(mAccelData.getLowestValueX());
+        mGraphView.getViewport().setMaxX(mAccelData.getHighestValueX());
+
+        mGraphView.getSecondScale().setMaxY(mHRData.getHighestValueY());
     }
 
     private void updateViews(){
@@ -290,8 +288,8 @@ public class MainActivity extends WearableActivity {
             }
         }
 
-        //Only show summary button if there are summaries
-        if(fileList().length > 2){ //There are 2 offline stores
+        // Only show summary button if there are summaries
+        if(fileList().length > 2){ // There are 2 offline stores
             mSummaryButton.setVisibility(View.VISIBLE);
         }else{
             mSummaryButton.setVisibility(View.GONE);

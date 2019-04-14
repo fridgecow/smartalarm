@@ -1,4 +1,4 @@
-package com.fridgecow.smartalarm;
+package com.fridgecow.smartalarm.views;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -8,6 +8,9 @@ import android.graphics.Rect;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.view.View;
+
+import com.fridgecow.smartalarm.datarepresentation.DataRegion;
+import com.fridgecow.smartalarm.datarepresentation.SleepSummaryData;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -21,7 +24,7 @@ import java.util.TimeZone;
 public class SleepView extends View {
     private SleepSummaryData mSleepData;
 
-    //Things for drawing
+    // Things for drawing
     private Paint mBackgroundPaint;
     private Paint mLightPaint;
     private Paint mREMPaint;
@@ -54,7 +57,7 @@ public class SleepView extends View {
     public void attachSleepData(SleepSummaryData data){
         mSleepData = data;
 
-        //Extract a start and end time, and a date label
+        // Extract a start and end time, and a date label
         Date startDate = new Date((long) data.getStart());
         Date endDate = new Date((long) data.getEnd());
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.US);
@@ -115,18 +118,18 @@ public class SleepView extends View {
         final int width = getWidth(), height = getHeight();
         final int left = getPaddingLeft(), top = getPaddingTop(), right = getPaddingRight(), bottom = getPaddingBottom();
         final int contentWidth = width - left - right;
-        //Draw Test Text
-        //canvas.drawText("Test", left, top, mTextPaint);
+        // Draw Test Text
+        // canvas.drawText("Test", left, top, mTextPaint);
 
         if(mSleepData != null){
             final float tickerTop = top + mTextHeight + 5;
             final float tickerBottom = height - mTextHeight - 5 - bottom;
 
-            //Draw background
-            //mBackgroundPaint.setStyle(Paint.Style.FILL);
+            // Draw background
+            // mBackgroundPaint.setStyle(Paint.Style.FILL);
             canvas.drawRect(left, tickerTop, width - right, tickerBottom, mBackgroundPaint);
 
-            //Draw Regions
+            // Draw Regions
             final float start = (float) mSleepData.getStart(), end = (float) mSleepData.getEnd();
             final float sleepLength = end - start;
             final float pixelScale = contentWidth/sleepLength;
@@ -142,7 +145,7 @@ public class SleepView extends View {
                 }
             }
 
-            //Draw Start and end time
+            // Draw Start and end time
             canvas.drawText(mDateLabel, left, top + mTextHeight, mTextPaint);
             canvas.drawText(mStartTime, left, tickerBottom + 5 + mTextHeight, mTextPaint);
             canvas.drawText(mEndTime, width - mEndWidth - right, tickerBottom + 5 + mTextHeight, mTextPaint);

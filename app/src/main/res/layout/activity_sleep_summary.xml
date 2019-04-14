@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="0dp"
+    android:background="@color/black"
     tools:context="com.fridgecow.smartalarm.SleepSummaryActivity"
     tools:deviceIds="wear">
 
@@ -27,7 +28,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="5dp" />
 
-                <com.fridgecow.smartalarm.SleepView
+                <com.fridgecow.smartalarm.views.SleepView
                     android:id="@+id/sleepView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

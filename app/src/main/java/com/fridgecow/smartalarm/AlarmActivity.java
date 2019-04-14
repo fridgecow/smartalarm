@@ -11,17 +11,13 @@ import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
 
 public class AlarmActivity extends WearableActivity {
 
     private SharedPreferences mPreferences;
     private Vibrator mVibrator;
 
-    private TextView mTime;
     private Button mDone;
     private Button mSnooze;
 
@@ -34,28 +30,17 @@ public class AlarmActivity extends WearableActivity {
 
         mFinished = false;
 
-        mDone = (Button) findViewById(R.id.button3);
+        mDone = findViewById(R.id.button3);
         mSnooze = findViewById(R.id.button5);
 
-        mDone.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-            dismiss();
-            }
-        });
-        mSnooze.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-            snooze();
-            }
-        });
+        mDone.setOnClickListener(view -> dismiss());
+        mSnooze.setOnClickListener(view -> snooze());
 
         mPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
         mVibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         long[] vibrationPattern = {0, 500, 50, 300};
-        final int indexInPatternToRepeat = 0;
-        mVibrator.vibrate(vibrationPattern, indexInPatternToRepeat);
+        mVibrator.vibrate(vibrationPattern, 0);
 
         // Enables Always-on
         setAmbientEnabled();
@@ -75,10 +60,9 @@ public class AlarmActivity extends WearableActivity {
 
     @Override
     protected void onUserLeaveHint() {
-        //super.onUserLeaveHint();
         Log.d("AlarmActivity", "onUserLeaveHint()");
 
-        //Snooze or Dismiss depending on preference
+        // Snooze or Dismiss depending on preference
         if(!mFinished) {
             if (mPreferences.getBoolean("smartalarm_dismiss_action", true)) {
                 Log.d("AlarmActivity", "Snoozing");
@@ -103,7 +87,7 @@ public class AlarmActivity extends WearableActivity {
 
         alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + snoozeTime, snoozeIntent);
 
-        //Finish for now
+        // Finish for now
         mVibrator.cancel();
         mFinished = true;
         finish();

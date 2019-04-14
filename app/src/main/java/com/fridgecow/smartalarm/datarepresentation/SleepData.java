@@ -1,9 +1,9 @@
-package com.fridgecow.smartalarm;
+package com.fridgecow.smartalarm.datarepresentation;
 
 import android.content.Context;
-import android.provider.ContactsContract;
 import android.util.Log;
 
+import com.fridgecow.smartalarm.interfaces.CSVable;
 import com.jjoe64.graphview.series.DataPoint;
 
 import java.io.BufferedReader;
@@ -14,41 +14,31 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 
 /**
  * Created by tom on 07/01/18.
  */
 
-public class SleepData {
+public class SleepData implements CSVable {
     private static final String TAG = "SleepData";
     private static final String OFFLINE_ACC = "sleepdata.csv";
     private static final String OFFLINE_HRM = "sleephrm.csv";
 
     public static final int STEPMILLIS = 60000;
-    private final double P = 0.001;
-    private final double[] W = {106.0, 54.0, 58.0, 76.0, 230.0, 74.0, 67.0};
+    private static final double P = 0.001;
+    private static final double[] W = {106.0, 54.0, 58.0, 76.0, 230.0, 74.0, 67.0};
+    private static final int DATAPOINTS_BEFORE_WRITEOUT = 1000;
 
     private Context mContext;
 
-    //Stores long-term tracking data
+    private double maxAccel;
+    private double maxHR;
+
+    // Stores long-term tracking data
     private List<DataPoint> mSleepMotion;
     private List<DataPoint> mSleepHR;
     private List<DataPoint> mSleepSDNN;
-
-
-    //For accelerometer
-    private double mAccelMax = 0.0;
-    private boolean mAccelDirty = false;
-
-    //For HR
-    private double mHRMax = 0.0;
-    private boolean mHRDirty = false;
-    private double mNNtotal = 0.0;
-    private double mNNsum = 0.0;
-    private double mNNsqsum = 0.0;
 
     public SleepData(Context context){
         mContext = context;
@@ -60,17 +50,7 @@ public class SleepData {
         mSleepMotion = new ArrayList<>();
         mSleepSDNN = new ArrayList<>();
 
-        mAccelMax = 0.0;
-        mHRMax = 0.0;
-
-        mNNtotal = 0;
-        mNNsum = 0;
-        mNNsqsum = 0;
-
-        mAccelDirty = false;
-        mHRDirty = false;
-
-        //Empty offline store and mAccelData etc
+        // Empty offline store and mAccelData etc
         try{
             final BufferedWriter DataStore = new BufferedWriter(new OutputStreamWriter(mContext.openFileOutput(OFFLINE_ACC, 0)));
             DataStore.close();
@@ -89,6 +69,7 @@ public class SleepData {
         writeListToCSV(mSleepMotion, OFFLINE_ACC);
         writeListToCSV(mSleepHR, OFFLINE_HRM);
     }
+
     private void writeListToCSV(List<DataPoint> list, String file) throws IOException{
         final BufferedWriter DataStore = new BufferedWriter(new OutputStreamWriter(mContext.openFileOutput(file, Context.MODE_APPEND)));
         for (DataPoint d : list) {
@@ -103,6 +84,7 @@ public class SleepData {
         readCSVToList(OFFLINE_ACC, mSleepMotion);
         readCSVToList(OFFLINE_HRM, mSleepHR);
     }
+
     private void readCSVToList(String file, List<DataPoint> list) throws IOException{
         FileInputStream fis = mContext.openFileInput(file);
         BufferedReader br = new BufferedReader(new InputStreamReader(fis));
@@ -113,95 +95,36 @@ public class SleepData {
             list.add(new DataPoint(Double.parseDouble(data[0]), Double.parseDouble(data[1])));
         }
 
-        Collections.sort(list, new Comparator<DataPoint>() {
-            @Override
-            public int compare(DataPoint dataPoint, DataPoint t1) {
-                if(dataPoint.getX() < t1.getX()){
-                    return -1;
-                }else if(dataPoint.getX() == t1.getX()){
-                    return 0;
-                }else{
-                    return 1;
-                }
-            }
-        });
+        Collections.sort(list, (dataPoint, t1) -> Double.compare(dataPoint.getX(), t1.getX()));
 
         br.close();
     }
 
-    public void recordSensor(double accel, double hr){
-        recordAccelSensor(accel);
-        recordHRSensor(hr, false);
+    public void recordAccelSensor(double accel) {
+        recordAccelSensor(accel, System.currentTimeMillis());
     }
 
-    public void recordAccelSensor(double accel){
-        if(accel > mAccelMax){
-            mAccelMax = accel;
-        }
-        mAccelDirty = true;
+    public void recordAccelSensor(double accel, long timestamp){
+        mSleepMotion.add(new DataPoint(timestamp, accel));
     }
 
-    public void recordHRSensor(double hr, boolean guessHRV){
-        if(hr > mHRMax){
-            mHRMax = hr;
-        }
-        mHRDirty = true;
+    public void recordHRSensor(double hr) {
+        recordHRSensor(hr, System.currentTimeMillis());
 
-        if(guessHRV){
-            double NN = (60 / hr);
-
-            mNNtotal += 1;
-            mNNsum += NN;
-            mNNsqsum += NN*NN;
-        }
     }
 
-    public void recordHBSensor(double hb){
-        Log.d(TAG, "Heart Beat "+hb+" "+System.currentTimeMillis());
-    }
-
-    public void recordPoint(){
-        long time = System.currentTimeMillis();
-
-        if(mAccelDirty) {
-            mSleepMotion.add(new DataPoint(time, mAccelMax));
-        }
-
-        double SDNN = 0;
-        if(mHRDirty) {
-            mSleepHR.add(new DataPoint(time, mHRMax));
-
-            if(mNNtotal > 0) {
-                SDNN = Math.sqrt((mNNtotal * mNNsqsum - mNNsum * mNNsum) / (mNNtotal * (mNNtotal - 1)));
-                mSleepSDNN.add(new DataPoint(time, SDNN));
-            }
-        }
-
-        Log.d(TAG, "Max Acc: " + mAccelMax + ", HR: "+mHRMax+" SDNN: "+SDNN);
-        mAccelMax = 0.0;
-        mHRMax = 0.0;
-        mNNsum = 0;
-        mNNsqsum = 0;
-        mNNtotal = 0;
-        mAccelDirty = false;
-        mHRDirty = false;
-    }
-
-    public List<DataPoint> getSleepMotion(){
-        return mSleepMotion;
+    public void recordHRSensor(double hr, long timestamp){
+        mSleepHR.add(new DataPoint(timestamp, hr));
     }
 
     public DataPoint[] getSleepMotionArray(){
-        return mSleepMotion.toArray(new DataPoint[mSleepMotion.size()]);
-    }
-
-    public List<DataPoint> getSleepHR(){
-        return mSleepHR;
+        return mSleepMotion.toArray(new DataPoint[0]);
     }
 
     public DataPoint[] getSleepHRArray(){
-        return mSleepHR.toArray(new DataPoint[mSleepHR.size()]);
+        return mSleepHR.toArray(new DataPoint[0]);
     }
+
     public double getMotionAt(int index){
         if(index < mSleepMotion.size()) {
             return mSleepMotion.get(index).getY();
@@ -211,7 +134,7 @@ public class SleepData {
     }
 
     private int binaryTimeSearch(List<DataPoint> list, double target){
-        //Do a binary search on list to find the lower index where the target time lies
+        // Do a binary search on list to find the lower index where the target time lies
         int lower = 0, upper = list.size()-1;
         while(upper - lower > 1){
             int trial = (lower + upper)/2;
@@ -226,32 +149,20 @@ public class SleepData {
         return lower;
     }
 
-    private double interpolateListFromTime(List<DataPoint> list, double target){
-        if(list.size() == 0){
-            return 0;
-        }
-        if(target >= list.get(0).getX() && target <= list.get(list.size()-1).getX()) {
-            int lower = binaryTimeSearch(list, target);
-            int upper = lower + 1;
+    private double interpolateListFromTime(List<DataPoint> list, double target) {
+        if (list.size() == 0) return 0;
+        if (target <= list.get(0).getX()) return list.get(0).getY();
+        if (target >= list.get(list.size() - 1).getX()) return list.get(list.size() - 1).getY();
 
-            if(upper < list.size()) {
-                double lowerTime = list.get(lower).getX(), upperTime = list.get(upper).getX();
-                double ratio = (target - lowerTime) / (upperTime - lowerTime);
+        int lower = binaryTimeSearch(list, target);
+        int upper = lower + 1;
 
-                //Log.d(TAG, "ratio: "+ratio+", got motion: "+((1 - ratio)*list.get(lower).getY() + (ratio)*list.get(upper).getY()));
+        if(upper >= list.size()) return list.get(lower).getY();
 
-                return (1 - ratio)*list.get(lower).getY() + (ratio)*list.get(upper).getY();
-            }else{
-                return list.get(lower).getY();
-            }
-        }else{
-            Log.d(TAG, "Time to interpolate outside of range - assuming closest value");
-            if(target < list.get(0).getX()){
-                return list.get(0).getY();
-            }else{
-                return list.get(list.size()-1).getY();
-            }
-        }
+        double lowerTime = list.get(lower).getX(), upperTime = list.get(upper).getX();
+        double ratio = (target - lowerTime) / (upperTime - lowerTime);
+
+        return (1 - ratio)*list.get(lower).getY() + (ratio)*list.get(upper).getY();
     }
 
     public double getMotionAt(double time){
@@ -288,14 +199,6 @@ public class SleepData {
         }
     }
 
-    public double getMotionMean(){
-        double tot = 0;
-        for(DataPoint d : mSleepMotion){
-            tot += d.getY();
-        }
-        return tot / mSleepMotion.size();
-    }
-
     public double getHRMean(){
         double tot = 0;
         for(DataPoint d : mSleepHR){
@@ -326,59 +229,60 @@ public class SleepData {
 
     public boolean getSleepingAt(double time){
         if(getDataLength() < 5){
-            return false; //Not enough data yet - guess "awake"
+            return false; // Not enough data yet - guess "awake"
         }
 
         double D = 0;
         for(int j = 0; j < W.length; j++){
-            //Ensure index is in range - if out of range, duplicate data
+            // Ensure index is in range - if out of range, duplicate data
             double t = Math.max(Math.min(time+(j-4)*STEPMILLIS, getEnd()), getStart());
-            double a = Math.min(getMotionAt(t), 300); //Cap at 300
+            double a = Math.min(getMotionAt(t), 300); // Cap at 300
 
             D += a*W[j];
         }
         D *= P;
-
-        Log.d(TAG, "At time "+(new Date((long) time))+" D="+D);
+        Log.d(TAG, "At "+System.currentTimeMillis()+", D = "+D+". Size: "+getDataLength());
 
         return D < 1;
     }
 
-    public String getCSV(boolean useHRM){
-        //Loop through datapoints to get CSV data
-        StringBuilder csv;
-        if(useHRM  && mSleepHR.size() > 0){
-            if(mSleepSDNN.size() > 0) {
-                csv = new StringBuilder("Unix Time,Motion,Heart Rate, SDNN\n");
-            }else{
-                csv = new StringBuilder("Unix Time,Motion,Heart Rate\n");
-            }
-        }else{
-            csv = new StringBuilder("Unix Time,Motion\n");
+    public String getCSV(){
+        int hrmSize = mSleepHR.size();
+
+        boolean useHRM = hrmSize > 0;
+        boolean useSDNN = useHRM & mSleepSDNN.size() > 0;
+
+        // Generate header
+        StringBuilder csv = new StringBuilder("Unix Time,Motion");
+        if(useHRM) {
+            csv.append(",Heart Rate");
         }
+
+        if(useSDNN) {
+            csv.append(",SDNN");
+        }
+
+        // Loop through datapoints to get CSV data
+        csv.append("\n");
         for (int i = 0; i < getDataLength(); i++) {
             long t = (long) getTimeAt(i);
             double m = getMotionAt(i);
-            if (useHRM && mSleepHR.size() > 0) {
-                double h, n;
-                if(mSleepHR.size() < mSleepMotion.size()){
-                    //Find the HR for this time
-                    h = getHRAt(t);
-                }else {
-                    //Simply get it from the index
-                    h = getHRAt(i);
-                }
 
-                if(mSleepSDNN.size() > 0) {
-                    n = getSDNNAt(t);
-                    csv.append(t).append(",").append(m).append(",").append(h).append(",").append(n).append("\n");
-                }else{
-                    csv.append(t).append(",").append(m).append(",").append(h).append("\n");
-                }
-            } else {
-                csv.append(t).append(",").append(m).append("\n");
+            csv.append(t).append(",").append(m);
+
+            if (useHRM) {
+                // Find HR based on time or index, depending on need to interpolate
+                double h = getHRAt(hrmSize < mSleepMotion.size() ? t : i);
+                csv.append(",").append(h);
             }
+
+            if(useSDNN) {
+                csv.append(",").append(getSDNNAt(t));
+            }
+
+            csv.append("\n");
         }
+
         return csv.toString();
     }
 

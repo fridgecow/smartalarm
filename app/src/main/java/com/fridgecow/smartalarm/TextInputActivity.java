@@ -1,19 +1,13 @@
 package com.fridgecow.smartalarm;
 
-import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.wearable.activity.WearableActivity;
-import android.text.InputFilter;
-import android.text.Spanned;
-import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 
 public class TextInputActivity extends WearableActivity {
 
@@ -34,24 +28,21 @@ public class TextInputActivity extends WearableActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_text_input);
 
-        //Initialize variables
-        mEditText = (EditText) findViewById(R.id.number_input);
-        mDoneButton = (Button) findViewById(R.id.done_button);
+        // Initialize variables
+        mEditText = findViewById(R.id.number_input);
+        mDoneButton = findViewById(R.id.done_button);
 
-        //Get arguments
+        // Get arguments
         loadIntentExtras();
 
         mEditText.setText(mValue);
 
-        //Implement Listeners
-        mDoneButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(view.getContext());
+        // Implement Listeners
+        mDoneButton.setOnClickListener(view -> {
+            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(view.getContext());
 
-                prefs.edit().putString(mKey, mEditText.getText().toString()).apply();
-                finish();
-            }
+            prefs.edit().putString(mKey, mEditText.getText().toString()).apply();
+            finish();
         });
     }
 

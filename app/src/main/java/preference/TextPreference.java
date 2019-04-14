@@ -6,9 +6,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
-import android.view.inputmethod.InputMethodManager;
 
-import com.fridgecow.smartalarm.NumberInputActivity;
 import com.fridgecow.smartalarm.TextInputActivity;
 
 /**
@@ -21,7 +19,7 @@ public class TextPreference extends WearPreference {
     public TextPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        //Get XML args
+        // Get XML args
         final int defResId = attrs.getAttributeResourceValue(NAMESPACE_ANDROID, "defaultValue", -1);
         if(defResId != -1){
             mDefault = context.getResources().getString(defResId);
