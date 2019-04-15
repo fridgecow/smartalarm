@@ -45,6 +45,17 @@ public class SleepData implements CSVable {
         reset();
     }
 
+    //For accelerometer
+    private double mAccelMax = 0.0;
+    private boolean mAccelDirty = false;
+
+    //For HR
+    private double mHRMax = 0.0;
+    private boolean mHRDirty = false;
+    private double mNNtotal = 0.0;
+    private double mNNsum = 0.0;
+    private double mNNsqsum = 0.0;
+
     public void reset(){
         mSleepHR = new ArrayList<>();
         mSleepMotion = new ArrayList<>();
@@ -100,21 +111,50 @@ public class SleepData implements CSVable {
         br.close();
     }
 
-    public void recordAccelSensor(double accel) {
-        recordAccelSensor(accel, System.currentTimeMillis());
+    public void processAccelSensor(double accel) {
+        if (accel > mAccelMax) {
+            mAccelMax = accel;
+        }
+        mAccelDirty = true;
     }
 
-    public void recordAccelSensor(double accel, long timestamp){
-        mSleepMotion.add(new DataPoint(timestamp, accel));
+    public void processHRSensor(double hr) {
+        if (hr > mHRMax) {
+            mHRMax = hr;
+        }
+        mHRDirty = true;
+
+        double NN = (60 / hr);
+        mNNtotal += 1;
+        mNNsum += NN;
+        mNNsqsum += NN * NN;
     }
 
-    public void recordHRSensor(double hr) {
-        recordHRSensor(hr, System.currentTimeMillis());
+    public void recordPoint() {
+        long time = System.currentTimeMillis();
 
-    }
+        if (mAccelDirty) {
+            mSleepMotion.add(new DataPoint(time, mAccelMax));
+        }
 
-    public void recordHRSensor(double hr, long timestamp){
-        mSleepHR.add(new DataPoint(timestamp, hr));
+        double SDNN = 0;
+        if (mHRDirty) {
+            mSleepHR.add(new DataPoint(time, mHRMax));
+
+            if (mNNtotal > 0) {
+                SDNN = Math.sqrt((mNNtotal * mNNsqsum - mNNsum * mNNsum) / (mNNtotal * (mNNtotal - 1)));
+                mSleepSDNN.add(new DataPoint(time, SDNN));
+            }
+        }
+
+        Log.d(TAG, "Max Acc: " + mAccelMax + ", HR: " + mHRMax + " SDNN: " + SDNN);
+        mAccelMax = 0.0;
+        mHRMax = 0.0;
+        mNNsum = 0;
+        mNNsqsum = 0;
+        mNNtotal = 0;
+        mAccelDirty = false;
+        mHRDirty = false;
     }
 
     public DataPoint[] getSleepMotionArray(){

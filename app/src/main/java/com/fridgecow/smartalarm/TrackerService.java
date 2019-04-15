@@ -74,8 +74,10 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     private boolean mAccelData = false;
     private double[] mAccelLast = {0.0, 0.0, 0.0}; // Keeps previous sensor value
 
-    private double mMaxAccel = 0;
-    private double mMaxHR = 0;
+    private double mSleepMotionMean = -1;
+    private int mHRPointsSinceTracked = 0;
+    private int mHRPointsToTrack = 0;
+    private boolean mHRJustTurnedOn;
 
     private boolean mSleeping;
 
@@ -92,41 +94,73 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     private SharedPreferences.OnSharedPreferenceChangeListener mPreferenceListener;
 
-    private class SleepProcessor extends AsyncTask<SleepData, Integer, SleepSummaryData>{
-        @Override
-        protected SleepSummaryData doInBackground(SleepData[] lists) {
-            // For now, only deal with the first SleepData
-            SleepData data = lists[0];
-            SleepSummaryData summarydata = new SleepSummaryData(data);
-            return summarydata;
+    private void recordHRFor(int points) {
+        if (mHRPointsToTrack == 0) {
+            mHRPointsToTrack = points;
+            mHRPointsSinceTracked = 0;
+            mHRJustTurnedOn = true;
+        } else {
+            mHRPointsToTrack = Math.max(mHRPointsToTrack, points);
         }
 
-        @Override
-        protected void onPostExecute(SleepSummaryData result){
-            // Store somewhere useful
-            // For now, "useful" is more csv files
-            if(result.size() > 0) {
-                try {
-                    result.writeOut(TrackerService.this, SUMMARY_PREFIX + ((long) result.getEnd()));
-                    Toast.makeText(getApplicationContext(), "Summary Complete", Toast.LENGTH_SHORT).show();
-                } catch (IOException e) {
-                    Log.d(TAG, "Unable to open file for output");
-                }
-            }else{
-                Toast.makeText(getApplicationContext(), "Not enough data to summarise", Toast.LENGTH_SHORT).show();
-            }
+        // Register sensor
+        if (mPreferences.getBoolean("hrm_use", true)) {
+            Log.d(TAG, "Tracking HR for " + points + " points");
+            Sensor hr = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
+
+            int hrmPoll = Integer.parseInt(mPreferences.getString("hrm_polling_rate", "3"));
+            mSensorManager.registerListener(
+                    this,
+                    hr,
+                    hrmPoll
+            );
         }
     }
 
+    private void stopHRRecord() {
+        // De-register sensor
+        Log.d(TAG, "Stopped tracking HR");
+
+        Sensor hr = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
+        mSensorManager.unregisterListener(this, hr);
+    }
+
+    @Override
+    public void onCreate(){
+        // Initialise values
+        mSleepData = new SleepData(this);
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        mQueue = Volley.newRequestQueue(this);
+
+        // Fill SleepMotion
+        try {
+            mSleepData.readIn();
+        }catch(IOException e){
+            Log.d(TAG, "Problem reading offline store");
+        }
+
+        // Allow preferences to be changed on-the-fly
+        mPreferenceListener = (sharedPreferences, key) -> {
+            if (key.equals("smartalarm_time") || key.equals("smartalarm_use")) {
+                configureAlarm();
+            } else if (key.equals("autostart_time") || key.equals("autostart_use")) {
+                configureAutostart();
+            } else if (key.equals("email") || key.equals("resend-confirm")) {
+                confirmEmail();
+            }
+        };
+        mPreferences.registerOnSharedPreferenceChangeListener(mPreferenceListener);
+    }
+
     private Handler mTrackingHandler = new Handler();
-    private Runnable mTrackingRunnable = new Runnable(){
+    private Runnable mTrackingRunnable = new Runnable() {
 
         @Override
         public void run() {
             recordLoop();
 
             int pollRate = mPreferences.getInt("datapoint_rate", 1);
-            mTrackingHandler.postDelayed(this, pollRate*60*1000);
+            mTrackingHandler.postDelayed(this, pollRate * 60 * 1000);
         }
     };
 
@@ -144,52 +178,30 @@ public class TrackerService extends Service implements SensorEventListener, Alar
             return TrackerService.this;
         }
     }
+
     private final IBinder mBinder = new LocalBinder();
-
-    @Override
-    public void onCreate(){
-        // Initialise values
-        mSleepData = new SleepData(this);
-        mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        mQueue = Volley.newRequestQueue(this);
-
-        // Fill SleepMotion
-        try {
-            mSleepData.readIn();
-        }catch(IOException e){
-            Log.d(TAG, "Problem reading offline store");
-        }
-
-        // Allow preferences to be changed on-the-fly
-        mPreferenceListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-            @Override
-            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                if(key.equals("smartalarm_time") || key.equals("smartalarm_use")){
-                    configureAlarm();
-                }else if(key.equals("autostart_time") || key.equals("autostart_use")){
-                    configureAutostart();
-                }else if(key.equals("email") || key.equals("resend-confirm")){
-                    confirmEmail();
-                }
-            }
-        };
-        mPreferences.registerOnSharedPreferenceChangeListener(mPreferenceListener);
-    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent == null || intent.getStringExtra("task") == null) {
             recordLoop();
-        }else{
-            String task = intent.getStringExtra("task");
-            Log.d(TAG, task);
-            if(task.equals("reset")){
+            return START_STICKY;
+        }
+
+        String task = intent.getStringExtra("task");
+        Log.d(TAG, task);
+
+        switch (task) {
+            case "reset":
                 reset();
-            }else if(task.equals("export")){
+                break;
+            case "export":
                 exportData();
-            }else if(task.equals("playpause")){
+                break;
+            case "playpause":
                 playPause();
-            }else if(task.equals("alarm")){
+                break;
+            case "alarm":
                 // Try and create Smart Alarm object if required
                 if(mSmartAlarm == null){
                     configureAlarm();
@@ -216,14 +228,41 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                         }
                     }
                 }
-            }
+                break;
         }
 
         return START_STICKY;
     }
 
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            // Calculate magnitude
+            if(mAccelData) {
+                // Calculate magnitude of difference between
+                // now and previous.
+                double value = 0.0;
+                for(int i = 0; i < mAccelLast.length; i++){
+                    value += Math.pow(mAccelLast[i] - event.values[i], 2);
+                    mAccelLast[i] = event.values[i];
+                }
+                mSleepData.processAccelSensor(value);
+            }else{
+                // Set previous
+                for(int i = 0; i < mAccelLast.length; i++){
+                    mAccelLast[i] = event.values[i];
+                }
+
+                mAccelData = true;
+            }
+        }else if(event.sensor.getType() == Sensor.TYPE_HEART_RATE){
+            mSleepData.processHRSensor(event.values[0]);
+        }
+    }
+
     private void activateAlarm() {
-        if(mPreferences.getBoolean("smartalarm_use", true)) {
+        if (mPreferences.getBoolean("smartalarm_use", true)) {
             Intent alarmIntent = new Intent(this, AlarmActivity.class);
             startActivity(alarmIntent);
 
@@ -248,41 +287,64 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         return mBinder;
     }
 
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            // Calculate magnitude
-            if(mAccelData) {
-                // Calculate magnitude of difference between
-                // now and previous.
-                double value = 0.0;
-                for(int i = 0; i < mAccelLast.length; i++){
-                    value += Math.pow(mAccelLast[i] - event.values[i], 2);
-                    mAccelLast[i] = event.values[i];
-                }
-
-                mMaxAccel = Math.max(mMaxAccel, value);
-            }else{
-                // Set previous
-                for(int i = 0; i < mAccelLast.length; i++){
-                    mAccelLast[i] = event.values[i];
-                }
-
-                mAccelData = true;
-            }
-        }else if(event.sensor.getType() == Sensor.TYPE_HEART_RATE){
-            mMaxHR = Math.max(mMaxHR, event.values[0]);
+    public void pause(){
+        if (!mRunning) {
+            return;
         }
+        mRunning = false;
+        mPaused = true;
+
+        // Unbind service listeners
+        mSensorManager.unregisterListener(this);
+
+        // Stop minute-by-minute tracking
+        if (!mPreferences.getBoolean("datapoint_forceaccurate", true)) {
+            mTrackingHandler.removeCallbacks(mTrackingRunnable);
+        } else {
+            Intent intent = new Intent(this, TrackerService.class);
+            PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_NO_CREATE);
+            if (pendingIntent != null) {
+                AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+                alarmManager.cancel(pendingIntent);
+            }
+        }
+
+        // Set notification
+        Intent appIntent = new Intent(this, MainActivity.class);
+        PendingIntent appPending = PendingIntent.getActivity(this, 0, appIntent, 0);
+
+        Intent playPauseIntent = new Intent(this, TrackerService.class);
+        playPauseIntent.putExtra("task", "playpause");
+        PendingIntent ppPending =
+                PendingIntent.getService(this, NOTIFICATION_INTENT, playPauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        NotificationCompat.Action.WearableExtender actionExtender = new NotificationCompat.Action.WearableExtender()
+                .setHintDisplayActionInline(true);
+
+        NotificationCompat.Action ppAction = new NotificationCompat.Action.Builder(
+                android.R.drawable.ic_media_play,
+                "Play",
+                ppPending).extend(actionExtender).build();
+
+        mNotification = new NotificationCompat.Builder(this, "sleeptracking")
+                .setContentTitle("Sleep Tracking Paused")
+                .setSmallIcon(R.mipmap.ic_launcher_foreground) // (icon is required)
+                .setContentIntent(appPending)
+                .addAction(ppAction);
+
+        mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Get back to bed!").build());
+
+        // Clear foreground
+        stopForeground(false);
     }
 
     @Override
-    public void onDestroy(){
+    public void onDestroy() {
         // Write out to file
         try {
             mSleepData.writeOut();
-        }catch(IOException e){
-            Log.d(TAG,"Failed to write out to offline store.");
+        } catch (IOException e) {
+            Log.d(TAG, "Failed to write out to offline store.");
         }
 
         mPreferences.unregisterOnSharedPreferenceChangeListener(mPreferenceListener);
@@ -295,11 +357,11 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     /* Class API */
 
-    public DataPoint[] getSleepMotion(){
+    public DataPoint[] getSleepMotion() {
         return mSleepData.getSleepMotionArray();
     }
 
-    public DataPoint[] getSleepHR(){
+    public DataPoint[] getSleepHR() {
         return mSleepData.getSleepHRArray();
     }
 
@@ -307,7 +369,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         exportData(mSleepData);
     }
 
-    public void exportData(CSVable data){
+    public void exportData(CSVable data) {
         Map<String, String> params = new HashMap<>();
         params.put("csv", data.getCSV());
         params.put("tz", TimeZone.getDefault().getID()); // Help server interpret timestamp
@@ -315,87 +377,41 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         apiCall(API_EMAILEXPORT, params);
     }
 
-    public void pause(){
-        if(mRunning) {
-            mRunning = false;
-            mPaused = true;
-
-            // Unbind service listeners
-            mSensorManager.unregisterListener(this);
-
-            // Stop minute-by-minute tracking
-            if(!mPreferences.getBoolean("datapoint_forceaccurate", true)) {
-                mTrackingHandler.removeCallbacks(mTrackingRunnable);
-            }else{
-                Intent intent = new Intent(this, TrackerService.class);
-                PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_NO_CREATE);
-                if (pendingIntent != null) {
-                    AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-                    alarmManager.cancel(pendingIntent);
-                }
-            }
-
-            // Set notification
-            Intent appIntent = new Intent(this, MainActivity.class);
-            PendingIntent appPending = PendingIntent.getActivity(this,  0, appIntent, 0);
-
-            Intent playPauseIntent = new Intent(this, TrackerService.class);
-            playPauseIntent.putExtra("task", "playpause");
-            PendingIntent ppPending =
-                    PendingIntent.getService(this, NOTIFICATION_INTENT, playPauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-            NotificationCompat.Action.WearableExtender actionExtender = new NotificationCompat.Action.WearableExtender()
-                    .setHintDisplayActionInline(true);
-
-            NotificationCompat.Action ppAction = new NotificationCompat.Action.Builder(
-                    android.R.drawable.ic_media_play,
-                    "Play",
-                    ppPending).extend(actionExtender).build();
-
-            mNotification = new NotificationCompat.Builder(this, "sleeptracking")
-                    .setContentTitle("Sleep Tracking Paused")
-                    .setSmallIcon(R.mipmap.ic_launcher_foreground) // (icon is required)
-                    .setContentIntent(appPending)
-                    .addAction(ppAction);
-
-            mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Get back to bed!").build());
-
-            // Clear foreground
-            stopForeground(false);
-        }
-    }
-
     public void play(){
-        if(!mRunning){
-            mRunning = true;
+        if (mRunning) {
+            return;
+        }
 
-            if(!mPaused){ // Perform a reset
-                reset();
-            }
-            mPaused = false;
-            mSleeping = false;
+        mRunning = true;
 
-            // Register sensors
-            mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        if (!mPaused) { // Perform a reset
+            reset();
+        }
+        mPaused = false;
+        mSleeping = false;
 
-            Sensor accel = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-            Sensor hr = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
+        // Register sensors
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
-            int accPoll = Integer.parseInt(mPreferences.getString("acc_polling_rate", "3"));
-            mSensorManager.registerListener(
-                    this,
-                    accel,
-                    accPoll
-            );
+        Sensor accel = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        Sensor hr = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
 
-            if(mPreferences.getBoolean("hrm_use", true)) {
-                Log.d(TAG, "Using HRM");
+        int accPoll = Integer.parseInt(mPreferences.getString("acc_polling_rate", "3"));
+        mSensorManager.registerListener(
+                this,
+                accel,
+                accPoll
+        );
 
-                // Check permissions
-                int permissionCheck = ContextCompat.checkSelfPermission(this,
-                        Manifest.permission.BODY_SENSORS);
+        if (mPreferences.getBoolean("hrm_use", true)) {
+            Log.d(TAG, "Using HRM");
 
-                if(permissionCheck == PackageManager.PERMISSION_GRANTED){
+            // Check permissions
+            int permissionCheck = ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.BODY_SENSORS);
+
+            if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+                if (!mPreferences.getBoolean("hrm_smart", true)) {
                     // Register the sensor unconditionally
                     int hrmPoll = Integer.parseInt(mPreferences.getString("hrm_polling_rate", "3"));
                     mSensorManager.registerListener(
@@ -403,53 +419,81 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                             hr,
                             hrmPoll
                     );
+                } else {
+                    // Get some initial data
+                    recordHRFor(3);
                 }
             }
-
-            // Configure Smart Alarm
-            configureAlarm();
-
-            // Run in foreground
-            Intent launchAppIntent = new Intent(this, MainActivity.class);
-            PendingIntent pendingIntent =
-                    PendingIntent.getActivity(this, 0, launchAppIntent, 0);
-
-            Intent playPauseIntent = new Intent(this, TrackerService.class);
-            playPauseIntent.putExtra("task", "playpause");
-            PendingIntent ppPending =
-                    PendingIntent.getService(this, NOTIFICATION_INTENT, playPauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-            NotificationCompat.Action.WearableExtender actionExtender = new NotificationCompat.Action.WearableExtender()
-                    .setHintDisplayActionInline(true);
-
-            NotificationCompat.Action ppAction = new NotificationCompat.Action.Builder(
-                    android.R.drawable.ic_media_pause,
-                    "Pause",
-                    ppPending).extend(actionExtender).build();
-
-
-            // Set foreground notification
-            mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            mNotification = new NotificationCompat.Builder(this, "sleeptracking")
-                    .setContentTitle("Sleep Tracking Enabled")
-                    .setSmallIcon(R.mipmap.ic_launcher_foreground) // (icon is required)
-                    .setContentIntent(pendingIntent)
-                    .addAction(ppAction);
-
-            Notification notification = mNotification.setContentText("You're not sleeping").build();
-            startForeground(ONGOING_NOTIFICATION_ID, notification);
-
-            // Ping ourselves every datapoint_rate minutes
-            if(!mPreferences.getBoolean("datapoint_forceaccurate", true)){
-                mTrackingHandler.post(mTrackingRunnable);
-            }else {
-                PendingIntent pingIntent = PendingIntent.getService(this, 0, new Intent(this, TrackerService.class), 0);
-                AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-                int pollRate = mPreferences.getInt("datapoint_rate", 1);
-                alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), pollRate * 60000, pingIntent);
-            }
-            triggerIFTTT(TRIGGER_TRACKINGSTART);
         }
+
+        // Configure Smart Alarm
+        configureAlarm();
+
+        // Run in foreground
+        Intent launchAppIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent =
+                PendingIntent.getActivity(this, 0, launchAppIntent, 0);
+
+        Intent playPauseIntent = new Intent(this, TrackerService.class);
+        playPauseIntent.putExtra("task", "playpause");
+        PendingIntent ppPending =
+                PendingIntent.getService(this, NOTIFICATION_INTENT, playPauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        NotificationCompat.Action.WearableExtender actionExtender = new NotificationCompat.Action.WearableExtender()
+                .setHintDisplayActionInline(true);
+
+        NotificationCompat.Action ppAction = new NotificationCompat.Action.Builder(
+                android.R.drawable.ic_media_pause,
+                "Pause",
+                ppPending).extend(actionExtender).build();
+
+
+        // Set foreground notification
+        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotification = new NotificationCompat.Builder(this, "sleeptracking")
+                .setContentTitle("Sleep Tracking Enabled")
+                .setSmallIcon(R.mipmap.ic_launcher_foreground) // (icon is required)
+                .setContentIntent(pendingIntent)
+                .addAction(ppAction);
+
+        Notification notification = mNotification.setContentText("You're not sleeping").build();
+        startForeground(ONGOING_NOTIFICATION_ID, notification);
+
+        // Ping ourselves every datapoint_rate minutes
+        if (!mPreferences.getBoolean("datapoint_forceaccurate", true)) {
+            mTrackingHandler.post(mTrackingRunnable);
+        } else {
+            PendingIntent pingIntent = PendingIntent.getService(this, 0, new Intent(this, TrackerService.class), 0);
+            AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+            int pollRate = mPreferences.getInt("datapoint_rate", 1);
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), pollRate * 60000, pingIntent);
+        }
+        triggerIFTTT(TRIGGER_TRACKINGSTART);
+    }
+
+    public void triggerIFTTT(final String type) {
+        // Get maker key
+        final String ifttt_key = mPreferences.getString("ifttt_key", "");
+        if (ifttt_key.equals("")) {
+            return;
+        }
+
+        String url = "https://maker.ifttt.com/trigger/smartalarm_" + type + "/with/key/" + ifttt_key;
+
+        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
+                response -> Log.d(TAG, "IFTTT: " + response),
+                error -> Log.d(TAG, "Error with IFTTT! " + error.getMessage())
+        ) {
+            @Override
+            protected Map<String, String> getParams() {
+                // Put different params based on type
+                // No params necessary right now!
+
+                return new HashMap<>();
+            }
+        };
+        mQueue.add(postRequest);
+
     }
 
     public boolean playPause(){
@@ -551,7 +595,6 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         }else{
             mSmartAlarm = null;
 
-
             // Clear current alerts, if they exist
             AlarmManager alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
             Intent alarmIntent = new Intent(this, TrackerService.class);
@@ -624,68 +667,93 @@ public class TrackerService extends Service implements SensorEventListener, Alar
         mQueue.add(postRequest);
     }
 
-    public void triggerIFTTT(final String type){
-        // Get maker key
-        final String ifttt_key = mPreferences.getString("ifttt_key", "");
-        if(ifttt_key.equals("")) {
+    private void recordLoop(){
+        if (!mRunning) {
+            Log.d(TAG, "Tracker Paused, not collecting data");
             return;
         }
 
-        String url = "https://maker.ifttt.com/trigger/smartalarm_"+type+"/with/key/"+ifttt_key;
+        if (!mAccelData) {
+            return;
+        }
 
-        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
-                response -> {
-                    // response
-                    Log.d(TAG, "IFTTT: "+response);
-                },
-                error -> {
-                    // error
-                    Log.d(TAG, "Error with IFTTT! "+error.getMessage());
+        Log.d(TAG, "Tracking Runnable doing work");
+
+        mSleepData.recordPoint();
+
+        //Deal with Smart HR tracking
+        if (mPreferences.getBoolean("hrm_smart", true)) {
+            if (mHRPointsToTrack > 0) {
+                mHRPointsToTrack--;
+                mHRJustTurnedOn = false;
+
+                if (mHRPointsToTrack == 0) {
+                    stopHRRecord();
                 }
-        ) {
-            @Override
-            protected Map<String, String> getParams() {
-                // Put different params based on type
-                // No params necessary right now!
-
-                return new HashMap<>();
             }
-        };
-        mQueue.add(postRequest);
 
+            mHRPointsSinceTracked++;
+            Log.d(TAG, mHRPointsSinceTracked + " points since HR tracked");
+
+            if (mHRPointsSinceTracked >= 10) {
+                if (!mSleeping) { // Interesting times - track every 10 minutes for 5 minutes
+                    recordHRFor(5);
+                } else { // Track every 10 minutes for 1 minute
+                    recordHRFor(5);
+                }
+            }
+        }
+
+        // Check if sleeping
+        boolean sleeping = mSleepData.getSleepingAt(mSleepData.getDataLength() - 1);
+        if (sleeping) {
+            if (!mSleeping) {
+                mSleeping = true;
+                triggerIFTTT(TRIGGER_ASLEEP);
+                mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("You're asleep!").build());
+
+                // Record for 2 minutes
+                if (mPreferences.getBoolean("hrm_smart", true)) {
+                    recordHRFor(2);
+                }
+            }
+        } else if (mSleeping) {
+            mSleeping = false;
+            mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Good morning!").build());
+            triggerIFTTT(TRIGGER_AWAKE);
+
+            // Record for 2 minutes
+            if (mPreferences.getBoolean("hrm_smart", true)) {
+                recordHRFor(2);
+            }
+        }
+
+        // Reset
+        mAccelData = false;
     }
 
-    private void recordLoop(){
-        if(mRunning){
-            if(mAccelData) {
-                mSleepData.recordAccelSensor(mMaxAccel);
-                Log.d(TAG, "Tracking Runnable doing work");
+    private class SleepProcessor extends AsyncTask<SleepData, Integer, SleepSummaryData> {
+        @Override
+        protected SleepSummaryData doInBackground(SleepData[] lists) {
+            // For now, only deal with the first SleepData
+            SleepData data = lists[0];
+            return new SleepSummaryData(data);
+        }
 
-                // Check if sleeping
-                boolean sleeping = mSleepData.getSleepingAt(mSleepData.getDataLength()-1);
-                if(sleeping){
-                    if(!mSleeping){
-                        mSleeping = true;
-                        triggerIFTTT(TRIGGER_ASLEEP);
-                        mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("You're asleep!").build());
-                    }
-                }else if(mSleeping){
-                    mSleeping = false;
-                    mNotificationManager.notify(ONGOING_NOTIFICATION_ID, mNotification.setContentText("Good morning!").build());
-                    triggerIFTTT(TRIGGER_AWAKE);
+        @Override
+        protected void onPostExecute(SleepSummaryData result) {
+            // Store somewhere useful
+            // For now, "useful" is more csv files
+            if (result.size() > 0) {
+                try {
+                    result.writeOut(TrackerService.this, SUMMARY_PREFIX + ((long) result.getEnd()));
+                    Toast.makeText(getApplicationContext(), "Summary Complete", Toast.LENGTH_SHORT).show();
+                } catch (IOException e) {
+                    Log.d(TAG, "Unable to open file for output");
                 }
-
-                // Reset
-                mAccelData = false;
-                mMaxAccel = 0;
+            } else {
+                Toast.makeText(getApplicationContext(), "Not enough data to summarise", Toast.LENGTH_SHORT).show();
             }
-
-            if(mMaxHR > 0){
-                mSleepData.recordHRSensor(mMaxHR);
-                mMaxHR = 0;
-            }
-        }else{
-            Log.d(TAG, "Tracker Paused, not collecting data");
         }
     }
 }
