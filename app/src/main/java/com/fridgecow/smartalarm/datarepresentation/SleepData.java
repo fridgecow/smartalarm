@@ -134,7 +134,7 @@ public class SleepData implements CSVable {
         long time = System.currentTimeMillis();
 
         if (mAccelDirty) {
-            mSleepMotion.add(new DataPoint(time, mAccelMax));
+            mSleepMotion.add(new DataPoint(time, Math.sqrt(mAccelMax)));
         }
 
         double SDNN = 0;
