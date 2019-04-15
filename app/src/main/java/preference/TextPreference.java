@@ -36,7 +36,8 @@ public class TextPreference extends WearPreference {
                 context,
                 getKey(),
                 getIcon(context),
-                getCurrentValue(context)
+                getCurrentValue(context),
+                mDefault
         );
 
         context.startActivity(inputMethod);
