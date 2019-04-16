@@ -53,6 +53,8 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     private static final int NOTIFICATION_INTENT = 10;
     private static final int PERMISSION_REQUEST_SENSOR = 1;
 
+    public static final String NOTIFICATION_CHANNEL_ID = "sleeptracker";
+
 
     private Context mContext = this;
 
@@ -326,7 +328,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
                 "Play",
                 ppPending).extend(actionExtender).build();
 
-        mNotification = new NotificationCompat.Builder(this, "sleeptracking")
+        mNotification = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
                 .setContentTitle("Sleep Tracking Paused")
                 .setSmallIcon(R.mipmap.ic_launcher_foreground) // (icon is required)
                 .setContentIntent(appPending)
@@ -450,7 +452,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
         // Set foreground notification
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotification = new NotificationCompat.Builder(this, "sleeptracking")
+        mNotification = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
                 .setContentTitle("Sleep Tracking Enabled")
                 .setSmallIcon(R.mipmap.ic_launcher_foreground) // (icon is required)
                 .setContentIntent(pendingIntent)

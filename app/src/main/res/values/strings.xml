@@ -114,4 +114,6 @@
     <string name="datapoint_forceaccurate_on">Enabled</string>
     <string name="datapoint_forceaccurate_off">Disabled</string>
     <string name="confirmation_resend">Resend Confirmation Email</string>
+    <string name="channel_name">Sleep Tracking</string>
+    <string name="channel_description">Ongoing notifications while tracking is running</string>
 </resources>

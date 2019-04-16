@@ -2,12 +2,16 @@ package com.fridgecow.smartalarm;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -88,6 +92,27 @@ public class MainActivity extends WearableActivity {
         bindService(service, mConnection, 0);
     }
 
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT < 26) {
+            return;
+        }
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (notificationManager == null) {
+            return;
+        }
+
+        NotificationChannel channel = new NotificationChannel(
+                TrackerService.NOTIFICATION_CHANNEL_ID,
+                getString(R.string.channel_name),
+                NotificationManager.IMPORTANCE_DEFAULT
+        );
+
+        channel.setDescription(getString(R.string.channel_description));
+        notificationManager.createNotificationChannel(channel);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -108,6 +133,8 @@ public class MainActivity extends WearableActivity {
             startActivity(new Intent("changelog"));
         }
 
+        // Set up notification channel
+        createNotificationChannel();
         startAndBindTrackingService();
 
         mTextView = findViewById(R.id.text);
