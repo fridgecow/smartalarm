@@ -1,26 +1,28 @@
-# Smart Alarm for Android Wear
+# Smart Alarm for Wear OS
 
-I was annoyed at the lack of stand-alone sleep trackers and smart alarms for android wear, so I made one.
+Smart Alarm is a privacy-focused sleep tracker with powerful features and works without an internet or phone connection.
 
-It's pretty bad right now, but it'll get better! Please feel free to pull request - although please don't judge my code too much! :)
+Please feel free to create issues, or fork and pull request - this project should receive much more love than I can give it.
 
 ## Links
-[Play Store / Alpha Test](https://play.google.com/apps/testing/com.fridgecow.smartalarm)
+[Play Store](https://play.google.com/store/apps/details?id=com.fridgecow.smartalarm)
+
+[Alpha Test](https://play.google.com/apps/testing/com.fridgecow.smartalarm)
 
 [Screenshots](https://github.com/fridgecow/smartalarm/tree/master/screenshots)
 
+[Server Source Code](https://github.com/fridgecow/smartalarm-server)
+
 ## Current Features:
-- Sleep Detection & [Sleep Summaries](https://github.com/fridgecow/smartalarm/wiki/Sleep-Detection)
+- Sleep Detection & [Sleep Summaries with REM detection](https://github.com/fridgecow/smartalarm/wiki/Sleep-Detection)
 - Accelerometer and Heart Rate tracking
 - Configurable polling rates
 - Smart Alarm
-- Export CSV to email address - [with REM detection](https://github.com/fridgecow/smartalarm/wiki/Sleep-Detection)
+- Export CSV and summaries to email address
 - Auto-Export
 - [IFTTT integration!](https://github.com/fridgecow/smartalarm/wiki/ifttt)
 
 ## Features I'd like:
-- ~Better number input (like in Alarms app)~ We have circular input!
-- ~IFTTT integration~ [Documentation is here!](https://github.com/fridgecow/smartalarm/wiki/ifttt)
 - Google Fit integration
 - Cleaner interface (and code)
 - Multiple alarms and configurable alarm period - Calendar integration?
