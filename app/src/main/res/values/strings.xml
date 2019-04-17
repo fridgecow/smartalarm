@@ -93,6 +93,8 @@
     <string name="changelog_html">
         New in this version:\n
         &#8226; App name catches up with 2018!\n
+        &#8226; New export email!\n
+        &#8226; Tracking notifications are back!\n
         &#8226; All backgrounds are now black!\n
         &#8226; Time picker has "Done" button\n
         &#8226; Accurate timings enabled by default - disable it in settings to improve battery.\n
