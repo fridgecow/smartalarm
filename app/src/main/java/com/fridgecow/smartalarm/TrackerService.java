@@ -55,7 +55,6 @@ public class TrackerService extends Service implements SensorEventListener, Alar
 
     public static final String NOTIFICATION_CHANNEL_ID = "sleeptracker";
 
-
     private Context mContext = this;
 
     private static final String TRIGGER_AWAKE = "awake";
