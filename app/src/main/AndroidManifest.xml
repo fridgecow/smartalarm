@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.fridgecow.smartalarm">
+
+    <uses-sdk tools:overrideLibrary="android.support.wear"/>
 
     <uses-feature android:name="android.hardware.type.watch" />
 
@@ -19,10 +22,6 @@
         <uses-library
             android:name="com.google.android.wearable"
             android:required="true" />
-        <!--
-               Set to true if your app is Standalone, that is, it does not require the handheld
-               app to run.
-        -->
         <meta-data
             android:name="com.google.android.wearable.standalone"
             android:value="true" />
@@ -69,7 +68,6 @@
             android:label="@string/title_activity_privacy_policy">
             <intent-filter>
                 <action android:name="privacypolicy" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>

@@ -10,7 +10,7 @@
     tools:context="com.fridgecow.smartalarm.NumberInputActivity"
     tools:deviceIds="wear">
 
-    <com.fridgecow.smartalarm.CircularInputView
+    <com.fridgecow.smartalarm.views.CircularInputView
         android:id="@+id/circInput"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -41,6 +41,6 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Display1" />
         </LinearLayout>
 
-    </com.fridgecow.smartalarm.CircularInputView>
+    </com.fridgecow.smartalarm.views.CircularInputView>
 </android.support.wear.widget.BoxInsetLayout>
 

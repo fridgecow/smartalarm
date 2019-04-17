@@ -1,33 +1,21 @@
 package preference;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.renderscript.ScriptGroup;
 import android.support.annotation.NonNull;
-import android.support.wear.widget.BoxInsetLayout;
-import android.support.wearable.activity.WearableActivity;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import com.fridgecow.smartalarm.NumberInputActivity;
-
-import preference.WearPreference;
 
 /**
  * Created by tom on 27/12/17.
  */
 
 public class NumberPreference extends WearPreference {
-    //private static final int EDIT_ID = 75;
+    // private static final int EDIT_ID = 75;
     private InputMethodManager mIMM;
     private Context mContext;
 
@@ -38,7 +26,7 @@ public class NumberPreference extends WearPreference {
     public NumberPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        //Get XML args
+        // Get XML args
         final int minResId = attrs.getAttributeResourceValue(NAMESPACE_ANDROID, "min", -1);
         if(minResId != -1){
             mMin = context.getResources().getInteger(minResId);
@@ -85,7 +73,7 @@ public class NumberPreference extends WearPreference {
         try {
             return preferences.getInt(getKey(), mDefault);
         }catch(ClassCastException e){
-            //A string was put here instead of an int - forget about it!
+            // A string was put here instead of an int - forget about it!
             return mDefault;
         }
     }

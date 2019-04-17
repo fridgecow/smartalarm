@@ -1,24 +1,18 @@
-package com.fridgecow.smartalarm;
+package com.fridgecow.smartalarm.views;
 
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.support.v4.content.ContextCompat;
-import android.support.wear.widget.SwipeDismissFrameLayout;
 import android.text.TextPaint;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 
-import java.math.BigDecimal;
+import com.fridgecow.smartalarm.R;
 
 /**
  * TODO: document your custom view class.
@@ -35,7 +29,7 @@ public class CircularInputView extends ViewGroup {
     private TextPaint mTextPaint;
     private TextPaint mHighlightPaint;
     private Paint mBackgroundPaint;
-    private Paint mTransparentPaint;
+    private Paint mViewPaint;
 
     private float mTextHeight;
     private float mHighlightHeight;
@@ -43,12 +37,12 @@ public class CircularInputView extends ViewGroup {
     private int mNumbers = 12;
     private int mNumber = mMin;
 
-    //Touch related
+    // Touch related
     private boolean mScrolling = false;
     private float mLastX;
     private float mLastY;
 
-    //Layout related
+    // Layout related
     private int mPaddingLeft;
     private int mPaddingTop;
     private int mPaddingRight;
@@ -83,7 +77,7 @@ public class CircularInputView extends ViewGroup {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        //Measure self
+        // Measure self
         mPaddingLeft = getPaddingLeft();
         mPaddingTop = getPaddingTop();
         mPaddingRight = getPaddingRight();
@@ -99,14 +93,14 @@ public class CircularInputView extends ViewGroup {
         mCenterX = getWidth() / 2;
         mCenterY = getHeight() / 2;
 
-        //Lay views out linearly downwards, centering them vertically and horizontally
+        // Lay views out linearly downwards, centering them vertically and horizontally
         int totalHeight = 0;
         final int count = getChildCount();
 
         final int xSpec = MeasureSpec.makeMeasureSpec(mContentWidth, MeasureSpec.AT_MOST);
         final int ySpec = MeasureSpec.makeMeasureSpec(mContentHeight, MeasureSpec.AT_MOST);
 
-        //Get total height
+        // Get total height
         for(int i = 0; i < count; i++) {
             View child = getChildAt(i);
 
@@ -139,7 +133,7 @@ public class CircularInputView extends ViewGroup {
         final TypedArray a = getContext().obtainStyledAttributes(
                 attrs, R.styleable.CircularInputView, defStyle, 0);
 
-        //Custom drawing
+        // Custom drawing
         setWillNotDraw(false);
 
         mTextColor = a.getColor(
@@ -171,16 +165,16 @@ public class CircularInputView extends ViewGroup {
 
         mBackgroundPaint = new Paint();
 
-        mTransparentPaint = new Paint();
-        mTransparentPaint.setColor(getResources().getColor(android.R.color.transparent));
-        mTransparentPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+        mViewPaint = new Paint();
+        mViewPaint.setColor(getResources().getColor(android.R.color.black));
+        // mViewPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 
         // Update paint and text measurements from attributes
         invalidatePaintAndMeasurements();
     }
 
     private void invalidatePaintAndMeasurements() {
-        //TextPaint
+        // TextPaint
         setTextSizeForWidth(mTextPaint, mThickness/2, Integer.toString(mMax));
         mTextPaint.setColor(mTextColor);
 
@@ -193,7 +187,7 @@ public class CircularInputView extends ViewGroup {
         Paint.FontMetrics fontMetrics1 = mHighlightPaint.getFontMetrics();
         mHighlightHeight = fontMetrics1.bottom;
 
-        //Background Paint
+        // Background Paint
         mBackgroundPaint.setColor(mBackgroundColor);
     }
 
@@ -224,16 +218,10 @@ public class CircularInputView extends ViewGroup {
 
         // TODO: cache as many computations as possible
 
-        //Log.d(TAG, "Padding: "+mPaddingTop+","+mPaddingRight+","+mPaddingBottom+","+mPaddingLeft);
-
-        //Log.d(TAG, "Dimensions: "+mContentWidth+","+mContentHeight);
-
-
-
-        //Log.d(TAG, "Center: "+mCenterX+","+mCenterY);
+        canvas.drawRect(0, 0, mContentWidth, mContentHeight, mViewPaint);
 
         canvas.drawCircle(mCenterX, mCenterY, mOuterRadius, mBackgroundPaint);
-        canvas.drawCircle(mCenterX, mCenterY, mInnerRadius, mTransparentPaint);
+        canvas.drawCircle(mCenterX, mCenterY, mInnerRadius, mViewPaint);
 
         final double angleDelta = (Math.PI * 2) / mNumbers;
         final int numberDelta = (mMax - mMin + 1) / mNumbers;
@@ -245,10 +233,7 @@ public class CircularInputView extends ViewGroup {
             final int x = (int) (mCenterX + Math.cos(angle)*mMidRadius);
             final int y = (int) (mCenterY + Math.sin(angle)*mMidRadius);
 
-            //Log.d(TAG, "Delta from up: "+Math.abs(angle + Math.PI));
-            //Log.d(TAG, "Angle: "+Math.abs(angle + Math.PI/2)%(Math.PI*2));
             if(y < mCenterY && Math.abs(x - mCenterX) < highlightWidth){
-                //Log.d(TAG, "Angle: "+Math.abs(angle + Math.PI/2)%(Math.PI*2));
                 final float textWidth = mHighlightPaint.measureText(number);
                 canvas.drawText(number, x - textWidth / 2, y + mHighlightHeight / 2, mHighlightPaint);
             }else {
@@ -265,11 +250,11 @@ public class CircularInputView extends ViewGroup {
         final int action = event.getAction();
 
         if(action == MotionEvent.ACTION_DOWN){
-            //Log.d(TAG, "Touch Down");
-            //Check where touch occurred
+            // Log.d(TAG, "Touch Down");
+            // Check where touch occurred
             final double dist = Math.pow(x - mCenterX, 2) + Math.pow(y - mCenterY, 2);
             if(dist > Math.pow(mInnerRadius, 2)){
-                //Log.d(TAG, "Within Boundary");
+                // Log.d(TAG, "Within Boundary");
                 mScrolling = true;
                 mLastX = x;
                 mLastY = y;
@@ -278,21 +263,21 @@ public class CircularInputView extends ViewGroup {
                 mScrolling = false;
             }
         }else if(action == MotionEvent.ACTION_UP){
-            //Log.d(TAG, "Touch Up");
+            // Log.d(TAG, "Touch Up");
             mScrolling = false;
             return true;
         }else if(action == MotionEvent.ACTION_MOVE && mScrolling){
-            //Find angular difference between positions
-            //Log.d(TAG, "X: "+x+" Y: "+y);
+            // Find angular difference between positions
+            // Log.d(TAG, "X: "+x+" Y: "+y);
 
             final double curAngle = Math.atan2(mCenterY - y, mCenterX - x);
             final double lastAngle = Math.atan2(mCenterY - mLastY, mCenterX - mLastX);
 
-            //Log.d(TAG, "Current: "+curAngle+" Last: "+lastAngle);
+            // Log.d(TAG, "Current: "+curAngle+" Last: "+lastAngle);
 
             final double dAngle = Math.atan2(Math.sin(curAngle-lastAngle), Math.cos(curAngle-lastAngle));
 
-            //Log.d(TAG, "Delta: "+dAngle);
+            // Log.d(TAG, "Delta: "+dAngle);
 
             setAngle(getAngle() + dAngle);
 
@@ -369,9 +354,9 @@ public class CircularInputView extends ViewGroup {
         if(mAngle < 0){
             mAngle += Math.PI*2;
         }
-        //Log.d(TAG, "New angle: "+Math.toDegrees(angle));
+        // Log.d(TAG, "New angle: "+Math.toDegrees(angle));
 
-        //Get number from angle around circle
+        // Get number from angle around circle
         int number =getNumberFromAngle(mAngle);
 
         if(number != mNumber){
@@ -386,7 +371,7 @@ public class CircularInputView extends ViewGroup {
     private int getNumberFromAngle(double angle){
         int number = mMin - (int) Math.round((mMax - mMin + 1)*angle/(2*Math.PI));
 
-        //Put number in range
+        // Put number in range
         number = Math.floorMod(number - mMin, mMax - mMin + 1) + mMin;
         return number;
     }
@@ -397,7 +382,7 @@ public class CircularInputView extends ViewGroup {
 
     public void setValue(int value){
         if(value >= mMin && value <= mMax){
-            //mNumber = value;
+            // mNumber = value;
             setAngle(((mMin - value)/((double) (mMax - mMin + 1)))*Math.PI*2);
         }
 

@@ -84,6 +84,13 @@
             android:defaultValue=""
             android:icon="@drawable/ic_ifttt"
             />
+
+        <TextPreference
+            android:key="export_server"
+            android:title="Email Server"
+            android:defaultValue="https://smartalarm.fridgecow.com"
+            android:icon="@drawable/ic_server"
+            />
     </PreferenceScreen>
 
     <PreferenceScreen
@@ -129,7 +136,7 @@
             android:summaryOff="@string/datapoint_forceaccurate_off"
             app:wear_iconOn="@drawable/ic_check_white"
             app:wear_iconOff="@drawable/ic_cross_white"
-            android:defaultValue="false"
+            android:defaultValue="true"
             />
 
         <PreferenceScreen

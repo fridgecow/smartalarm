@@ -1,6 +1,4 @@
-package com.fridgecow.smartalarm;
-
-import android.provider.ContactsContract;
+package com.fridgecow.smartalarm.datarepresentation;
 
 import com.jjoe64.graphview.series.DataPoint;
 

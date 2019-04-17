@@ -1,8 +1,9 @@
-package com.fridgecow.smartalarm;
+package com.fridgecow.smartalarm.datarepresentation;
 
 import android.content.Context;
 import android.util.Log;
 
+import com.fridgecow.smartalarm.interfaces.CSVable;
 import com.jjoe64.graphview.series.DataPoint;
 
 import java.io.BufferedReader;
@@ -19,7 +20,7 @@ import java.util.List;
  * Created by tom on 04/01/18.
  */
 
-public class SleepSummaryData extends ArrayList<DataRegion> implements Serializable{
+public class SleepSummaryData extends ArrayList<DataRegion> implements Serializable, CSVable {
     public static final String WAKEREGION = "wakeful";
     public static final String REMREGION = "rem";
 
@@ -63,11 +64,11 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
         mStart = data.getStart();
         mEnd = data.getEnd();
 
-        //Process in sleepdata
-        //Do actigraphy algorithm
-        //https://github.com/fridgecow/smartalarm/wiki/Sleep-Detection
+        // Process in sleepdata
+        // Do actigraphy algorithm
+        // https:// github.com/fridgecow/smartalarm/wiki/Sleep-Detection
 
-        //Try to detect REM by estimating HRV
+        // Try to detect REM by estimating HRV
         double HRVthresh = 0;
         List<DataPoint> HRV = null;
         if(data.hasHRData()) {
@@ -96,14 +97,14 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
         }
 
 
-        //Wrist actigraphy
+        // Wrist actigraphy
         boolean sleeping = false;
         double lastTime = getStart();
         for(double i = getStart(); i < getEnd(); i += SleepData.STEPMILLIS){
-            if(data.getSleepingAt(i)) { //Sleep
+            if(data.getSleepingAt(i)) { // Sleep
                 Log.d(TAG, "Sleeping at time "+i);
                 if(!sleeping){
-                    //End a region
+                    // End a region
                     boolean remclassifier = false;
                     if(data.hasSDNNData()){
                         remclassifier = maxintime(data.getSDNN(), lastTime, i - SleepData.STEPMILLIS)  < HRVthresh;
@@ -125,17 +126,17 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
                     }
                     sleeping = true;
                 }
-            }else { //Wakefulness
+            }else { // Wakefulness
                 Log.d(TAG, "Wakeful at time "+i);
                 if(sleeping){
-                    //Start a region
+                    // Start a region
                     lastTime = i;
                     sleeping = false;
                 }
             }
         }
 
-        //Deal with last section
+        // Deal with last section
         if(!sleeping && data.getDataLength() > 0){
             add(new DataRegion(
                     lastTime,
@@ -163,7 +164,7 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
     public void readIn(Context c, String filename) throws IOException {
         final BufferedReader in = new BufferedReader(new InputStreamReader(c.openFileInput(filename)));
 
-        //First line
+        // First line
         String line = in.readLine();
         if(line != null) {
             String[] meta = line.split(",");
@@ -173,7 +174,7 @@ public class SleepSummaryData extends ArrayList<DataRegion> implements Serializa
             throw new IOException("SleepSummaryData file has no contents");
         }
 
-        //Other lines
+        // Other lines
         while((line = in.readLine()) != null){
             String[] data = line.split(",");
             if(data.length == 3) {
