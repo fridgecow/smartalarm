@@ -265,6 +265,7 @@ public class TrackerService extends Service implements SensorEventListener, Alar
     private void activateAlarm() {
         if (mPreferences.getBoolean("smartalarm_use", true)) {
             Intent alarmIntent = new Intent(this, AlarmActivity.class);
+            alarmIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(alarmIntent);
 
             triggerIFTTT(TRIGGER_ALARM);
