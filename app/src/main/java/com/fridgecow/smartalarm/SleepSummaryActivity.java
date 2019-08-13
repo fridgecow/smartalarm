@@ -135,6 +135,15 @@ public class SleepSummaryActivity extends WearableActivity {
         currentMetric = findViewById(R.id.detectedwaketime);
         Date wakeDate = new Date((long) mData.get(mData.size() - 1).getStart());
         currentMetric.setText(timeFormat.format(wakeDate));
+
+        currentMetric = findViewById(R.id.totalsleeptime);
+        int sleepHours   = (int) ((totalTime / (1000 * 60 * 60)) % 24);
+        int mins   = (int) ((totalTime / (1000 * 60)) % 60);
+        currentMetric.setText(
+            (sleepHours > 9 ? sleepHours : "0" + sleepHours)
+            + ":"
+            + (mins > 9 ? mins : "0" + mins)
+        );
     }
 
     private void loadIntentExtras(){
