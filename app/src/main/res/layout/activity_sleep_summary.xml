@@ -165,7 +165,7 @@
                     android:id="@+id/label_totalsleeptime"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Total Sleep Time" />
+                    android:text="Total Tracking Time" />
 
                 <TextView
                     android:id="@+id/totalsleeptime"
